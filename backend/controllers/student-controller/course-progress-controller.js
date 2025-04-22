@@ -1,45 +1,58 @@
-import CourseProgress from "../../models/CourseProgress";
-import Course from "../../models/Course";
-import StudentCourses from "../../models/StudentCourses";
+import { prisma } from "../../prisma/index.js";
 
-//mark current lecture as viewed
-const markCurrentLectureAsViewed = async (req, res) => {
+export const markCurrentLectureAsViewed = async (req, res) => {
   try {
     const { userId, courseId, lectureId } = req.body;
 
-    let progress = await CourseProgress.findOne({ userId, courseId });
-    if (!progress) {
-      progress = new CourseProgress({
-        userId,
-        courseId,
-        lecturesProgress: [
-          {
-            lectureId,
-            viewed: true,
-            dateViewed: new Date(),
-          },
-        ],
-      });
-      await progress.save();
-    } else {
-      const lectureProgress = progress.lecturesProgress.find(
-        (item) => item.lectureId === lectureId
-      );
+    // Find existing progress
+    let progress = await prisma.courseProgress.findUnique({
+      where: {
+        userId_courseId: { userId: Number(userId), courseId: Number(courseId) },
+      },
+    });
 
-      if (lectureProgress) {
-        lectureProgress.viewed = true;
-        lectureProgress.dateViewed = new Date();
+    const now = new Date();
+    const lectureEntry = { lectureId, viewed: true, dateViewed: now };
+
+    if (!progress) {
+      // Create new progress record
+      progress = await prisma.courseProgress.create({
+        data: {
+          userId: Number(userId),
+          courseId: Number(courseId),
+          lecturesProgress: {
+            set: [lectureEntry],
+          },
+        },
+      });
+    } else {
+      // Update existing progress
+      const lectures = Array.isArray(progress.lecturesProgress)
+        ? [...progress.lecturesProgress]
+        : [];
+
+      const idx = lectures.findIndex((item) => item.lectureId === lectureId);
+      if (idx > -1) {
+        lectures[idx] = lectureEntry;
       } else {
-        progress.lecturesProgress.push({
-          lectureId,
-          viewed: true,
-          dateViewed: new Date(),
-        });
+        lectures.push(lectureEntry);
       }
-      await progress.save();
+
+      progress = await prisma.courseProgress.update({
+        where: {
+          userId_courseId: {
+            userId: Number(userId),
+            courseId: Number(courseId),
+          },
+        },
+        data: { lecturesProgress: { set: lectures } },
+      });
     }
 
-    const course = await Course.findById(courseId);
+    // Fetch course curriculum
+    const course = await prisma.course.findUnique({
+      where: { id: Number(courseId) },
+    });
 
     if (!course) {
       return res.status(404).json({
@@ -48,16 +61,24 @@ const markCurrentLectureAsViewed = async (req, res) => {
       });
     }
 
-    //check all the lectures are viewed or not
+    // Check if all lectures viewed
+    const curriculum = Array.isArray(course.curriculum)
+      ? course.curriculum
+      : [];
     const allLecturesViewed =
-      progress.lecturesProgress.length === course.curriculum.length &&
+      progress.lecturesProgress.length === curriculum.length &&
       progress.lecturesProgress.every((item) => item.viewed);
 
     if (allLecturesViewed) {
-      progress.completed = true;
-      progress.completionDate = new Date();
-
-      await progress.save();
+      progress = await prisma.courseProgress.update({
+        where: {
+          userId_courseId: {
+            userId: Number(userId),
+            courseId: Number(courseId),
+          },
+        },
+        data: { completed: true, completionDate: now },
+      });
     }
 
     res.status(200).json({
@@ -66,7 +87,7 @@ const markCurrentLectureAsViewed = async (req, res) => {
       data: progress,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({
       success: false,
       message: "Some error occured!",
@@ -74,38 +95,42 @@ const markCurrentLectureAsViewed = async (req, res) => {
   }
 };
 
-//get current course progress
-const getCurrentCourseProgress = async (req, res) => {
+export const getCurrentCourseProgress = async (req, res) => {
   try {
     const { userId, courseId } = req.params;
 
-    const studentPurchasedCourses = await StudentCourses.findOne({ userId });
+    const studentPurchasedCourses = await prisma.studentCourses.findUnique({
+      where: { userId: Number(userId) },
+    });
 
     const isCurrentCoursePurchasedByCurrentUserOrNot =
-      studentPurchasedCourses?.courses?.findIndex(
-        (item) => item.courseId === courseId
+      Array.isArray(studentPurchasedCourses?.courses) &&
+      studentPurchasedCourses.courses.findIndex(
+        (item) => item.courseId === Number(courseId)
       ) > -1;
 
     if (!isCurrentCoursePurchasedByCurrentUserOrNot) {
       return res.status(200).json({
         success: true,
-        data: {
-          isPurchased: false,
-        },
+        data: { isPurchased: false },
         message: "You need to purchase this course to access it.",
       });
     }
 
-    const currentUserCourseProgress = await CourseProgress.findOne({
-      userId,
-      courseId,
+    let currentUserCourseProgress = await prisma.courseProgress.findUnique({
+      where: {
+        userId_courseId: { userId: Number(userId), courseId: Number(courseId) },
+      },
     });
 
     if (
       !currentUserCourseProgress ||
-      currentUserCourseProgress?.lecturesProgress?.length === 0
+      !Array.isArray(currentUserCourseProgress.lecturesProgress) ||
+      currentUserCourseProgress.lecturesProgress.length === 0
     ) {
-      const course = await Course.findById(courseId);
+      const course = await prisma.course.findUnique({
+        where: { id: Number(courseId) },
+      });
       if (!course) {
         return res.status(404).json({
           success: false,
@@ -124,7 +149,9 @@ const getCurrentCourseProgress = async (req, res) => {
       });
     }
 
-    const courseDetails = await Course.findById(courseId);
+    const courseDetails = await prisma.course.findUnique({
+      where: { id: Number(courseId) },
+    });
 
     res.status(200).json({
       success: true,
@@ -137,7 +164,7 @@ const getCurrentCourseProgress = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({
       success: false,
       message: "Some error occured!",
@@ -145,13 +172,15 @@ const getCurrentCourseProgress = async (req, res) => {
   }
 };
 
-//reset course progress
-
-const resetCurrentCourseProgress = async (req, res) => {
+export const resetCurrentCourseProgress = async (req, res) => {
   try {
     const { userId, courseId } = req.body;
 
-    const progress = await CourseProgress.findOne({ userId, courseId });
+    const progress = await prisma.courseProgress.findUnique({
+      where: {
+        userId_courseId: { userId: Number(userId), courseId: Number(courseId) },
+      },
+    });
 
     if (!progress) {
       return res.status(404).json({
@@ -160,19 +189,24 @@ const resetCurrentCourseProgress = async (req, res) => {
       });
     }
 
-    progress.lecturesProgress = [];
-    progress.completed = false;
-    progress.completionDate = null;
-
-    await progress.save();
+    const updated = await prisma.courseProgress.update({
+      where: {
+        userId_courseId: { userId: Number(userId), courseId: Number(courseId) },
+      },
+      data: {
+        lecturesProgress: { set: [] },
+        completed: false,
+        completionDate: null,
+      },
+    });
 
     res.status(200).json({
       success: true,
       message: "Course progress has been reset",
-      data: progress,
+      data: updated,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({
       success: false,
       message: "Some error occured!",

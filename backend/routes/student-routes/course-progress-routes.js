@@ -3,7 +3,7 @@ import  {
   getCurrentCourseProgress,
   markCurrentLectureAsViewed,
   resetCurrentCourseProgress,
-} from "../../controllers/student-controller/course-progress-controller";
+} from "../../controllers/student-controller/course-progress-controller.js";
 
 const router = express.Router();
 

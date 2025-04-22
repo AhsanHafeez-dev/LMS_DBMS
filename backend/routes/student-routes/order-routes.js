@@ -2,7 +2,7 @@ import express from "express";
 import {
   createOrder,
   capturePaymentAndFinalizeOrder,
-} from "../../controllers/student-controller/order-controller";
+} from "../../controllers/student-controller/order-controller.js";
 
 const router = express.Router();
 

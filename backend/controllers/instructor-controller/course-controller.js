@@ -31,7 +31,7 @@ const getCourseDetails = async (req, res) => {
 
     const course=await prisma.course.findUnique({
       where: {
-        or: [{id}],
+        id
       },
     });
 
@@ -48,13 +48,17 @@ const updateCourseById = async (req, res) => {
   try {
     const {id} = req.params;
     const courseDetails  = req.body;
-    const updatedCourse=await prisma.course.updateUnique({
+    const updatedCourse=await prisma.course.update({
       where: {
-        or: [{ id }],
+        id
       },
+      data:courseDetails
     });
+
     if(!updatedCourse){throw new ApiError(httpCodes,httpCodes.notFound,"course can't be updated")}
-    req.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok,updatedCourse,"updated"))
+    
+    req.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok, updatedCourse, "updated"))
+    
   } catch (error) {
     console.log(error);
     throw new ApiError(httpCodes.serverSideError, error.message);

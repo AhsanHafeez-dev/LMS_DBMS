@@ -1,9 +1,7 @@
 import paypal from "../../helpers/paypal";
-import Order from "../../models/Order";
-import Course from "../../models/Course";
-import StudentCourses from "../../models/StudentCourses";
+import { prisma } from "../../prisma/index.js";
 
-const createOrder = async (req, res) => {
+export const createOrder = async (req, res) => {
   try {
     const {
       userId,
@@ -56,47 +54,48 @@ const createOrder = async (req, res) => {
 
     paypal.payment.create(create_payment_json, async (error, paymentInfo) => {
       if (error) {
-        console.log(error);
+        console.error(error);
         return res.status(500).json({
           success: false,
           message: "Error while creating paypal payment!",
         });
-      } else {
-        const newlyCreatedCourseOrder = new Order({
-          userId,
+      }
+
+      // Persist order in database
+      const newlyCreatedCourseOrder = await prisma.order.create({
+        data: {
+          userId: Number(userId),
           userName,
           userEmail,
           orderStatus,
           paymentMethod,
           paymentStatus,
-          orderDate,
+          orderDate: new Date(orderDate),
           paymentId,
           payerId,
-          instructorId,
+          instructorId: Number(instructorId),
           instructorName,
           courseImage,
           courseTitle,
-          courseId,
-          coursePricing,
-        });
+          courseId: Number(courseId),
+          coursePricing: Number(coursePricing),
+        },
+      });
 
-        await newlyCreatedCourseOrder.save();
+      const approveUrl = paymentInfo.links.find(
+        (link) => link.rel === "approval_url"
+      ).href;
 
-        const approveUrl = paymentInfo.links.find(
-          (link) => link.rel == "approval_url"
-        ).href;
-
-        res.status(201).json({
-          success: true,
-          data: {
-            approveUrl,
-            orderId: newlyCreatedCourseOrder._id,
-          },
-        });
-      }
+      res.status(201).json({
+        success: true,
+        data: {
+          approveUrl,
+          orderId: newlyCreatedCourseOrder.id,
+        },
+      });
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({
       success: false,
       message: "Some error occured!",
@@ -104,11 +103,14 @@ const createOrder = async (req, res) => {
   }
 };
 
-const capturePaymentAndFinalizeOrder = async (req, res) => {
+export const capturePaymentAndFinalizeOrder = async (req, res) => {
   try {
     const { paymentId, payerId, orderId } = req.body;
 
-    let order = await Order.findById(orderId);
+    // Retrieve existing order
+    let order = await prisma.order.findUnique({
+      where: { id: Number(orderId) },
+    });
 
     if (!order) {
       return res.status(404).json({
@@ -117,57 +119,68 @@ const capturePaymentAndFinalizeOrder = async (req, res) => {
       });
     }
 
-    order.paymentStatus = "paid";
-    order.orderStatus = "confirmed";
-    order.paymentId = paymentId;
-    order.payerId = payerId;
-
-    await order.save();
-
-    //update out student course model
-    const studentCourses = await StudentCourses.findOne({
-      userId: order.userId,
+    // Update order status
+    order = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        paymentStatus: "paid",
+        orderStatus: "confirmed",
+        paymentId,
+        payerId,
+      },
     });
 
+    // Update or create student courses entry
+    const studentCourses = await prisma.studentCourses.findUnique({
+      where: { userId: order.userId },
+    });
+
+    const newCourseEntry = {
+      courseId: order.courseId,
+      title: order.courseTitle,
+      instructorId: order.instructorId,
+      instructorName: order.instructorName,
+      dateOfPurchase: order.orderDate,
+      courseImage: order.courseImage,
+    };
+
     if (studentCourses) {
-      studentCourses.courses.push({
-        courseId: order.courseId,
-        title: order.courseTitle,
-        instructorId: order.instructorId,
-        instructorName: order.instructorName,
-        dateOfPurchase: order.orderDate,
-        courseImage: order.courseImage,
-      });
+      const updatedCourses = Array.isArray(studentCourses.courses)
+        ? [...studentCourses.courses, newCourseEntry]
+        : [newCourseEntry];
 
-      await studentCourses.save();
+      await prisma.studentCourses.update({
+        where: { userId: order.userId },
+        data: { courses: { set: updatedCourses } },
+      });
     } else {
-      const newStudentCourses = new StudentCourses({
-        userId: order.userId,
-        courses: [
-          {
-            courseId: order.courseId,
-            title: order.courseTitle,
-            instructorId: order.instructorId,
-            instructorName: order.instructorName,
-            dateOfPurchase: order.orderDate,
-            courseImage: order.courseImage,
-          },
-        ],
+      await prisma.studentCourses.create({
+        data: {
+          userId: order.userId,
+          courses: { set: [newCourseEntry] },
+        },
       });
-
-      await newStudentCourses.save();
     }
 
-    //update the course schema students
-    await Course.findByIdAndUpdate(order.courseId, {
-      $addToSet: {
-        students: {
-          studentId: order.userId,
-          studentName: order.userName,
-          studentEmail: order.userEmail,
-          paidAmount: order.coursePricing,
-        },
-      },
+    // Update course's students list
+    const courseRecord = await prisma.course.findUnique({
+      where: { id: order.courseId },
+    });
+
+    const newStudentEntry = {
+      studentId: order.userId,
+      studentName: order.userName,
+      studentEmail: order.userEmail,
+      paidAmount: order.coursePricing,
+    };
+
+    const updatedStudents = Array.isArray(courseRecord?.students)
+      ? [...courseRecord.students, newStudentEntry]
+      : [newStudentEntry];
+
+    await prisma.course.update({
+      where: { id: order.courseId },
+      data: { students: { set: updatedStudents } },
     });
 
     res.status(200).json({
@@ -176,7 +189,7 @@ const capturePaymentAndFinalizeOrder = async (req, res) => {
       data: order,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({
       success: false,
       message: "Some error occured!",

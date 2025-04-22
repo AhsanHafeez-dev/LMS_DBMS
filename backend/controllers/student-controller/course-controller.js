@@ -1,12 +1,14 @@
-import Course from "../../models/Course";
-import StudentCourses from "../../models/StudentCourses";
+import { prisma } from "../../prisma/index.js";
 
-const getAllStudentViewCourses = async (req, res) => {
+export const getAllStudentViewCourses = async (req, res) => {
   try {
+    // Optional: fetch all courses (if you still need this in l)
+    const l = await prisma.course.findMany();
+
     const {
-      category = [],
-      level = [],
-      primaryLanguage = [],
+      category = "",
+      level = "",
+      primaryLanguage = "",
       sortBy = "price-lowtohigh",
     } = req.query;
 
@@ -14,47 +16,44 @@ const getAllStudentViewCourses = async (req, res) => {
 
     let filters = {};
     if (category.length) {
-      filters.category = { $in: category.split(",") };
+      filters.category = { in: category.split(",") };
     }
     if (level.length) {
-      filters.level = { $in: level.split(",") };
+      filters.level = { in: level.split(",") };
     }
     if (primaryLanguage.length) {
-      filters.primaryLanguage = { $in: primaryLanguage.split(",") };
+      filters.primaryLanguage = { in: primaryLanguage.split(",") };
     }
 
     let sortParam = {};
     switch (sortBy) {
       case "price-lowtohigh":
-        sortParam.pricing = 1;
-
+        sortParam = { pricing: "asc" };
         break;
       case "price-hightolow":
-        sortParam.pricing = -1;
-
+        sortParam = { pricing: "desc" };
         break;
       case "title-atoz":
-        sortParam.title = 1;
-
+        sortParam = { title: "asc" };
         break;
       case "title-ztoa":
-        sortParam.title = -1;
-
+        sortParam = { title: "desc" };
         break;
-
       default:
-        sortParam.pricing = 1;
-        break;
+        sortParam = { pricing: "asc" };
     }
 
-    const coursesList = await Course.find(filters).sort(sortParam);
+    const coursesList = await prisma.course.findMany({
+      where: filters,
+      orderBy: sortParam,
+    });
 
     res.status(200).json({
       success: true,
       data: coursesList,
     });
   } catch (e) {
-    console.log(e);
+    console.error(e);
     res.status(500).json({
       success: false,
       message: "Some error occured!",
@@ -62,10 +61,12 @@ const getAllStudentViewCourses = async (req, res) => {
   }
 };
 
-const getStudentViewCourseDetails = async (req, res) => {
+export const getStudentViewCourseDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const courseDetails = await Course.findById(id);
+    const courseDetails = await prisma.course.findUnique({
+      where: { id: Number(id) },
+    });
 
     if (!courseDetails) {
       return res.status(404).json({
@@ -80,7 +81,7 @@ const getStudentViewCourseDetails = async (req, res) => {
       data: courseDetails,
     });
   } catch (e) {
-    console.log(e);
+    console.error(e);
     res.status(500).json({
       success: false,
       message: "Some error occured!",
@@ -88,21 +89,27 @@ const getStudentViewCourseDetails = async (req, res) => {
   }
 };
 
-const checkCoursePurchaseInfo = async (req, res) => {
+export const checkCoursePurchaseInfo = async (req, res) => {
   try {
     const { id, studentId } = req.params;
-    const studentCourses = await StudentCourses.findOne({
-      userId: studentId,
+    const studentCourses = await prisma.studentCourses.findUnique({
+      where: { userId: Number(studentId) },
     });
 
-    const ifStudentAlreadyBoughtCurrentCourse =
-      studentCourses.courses.findIndex((item) => item.courseId === id) > -1;
+    const ifStudentAlreadyBoughtCurrentCourse = Array.isArray(
+      studentCourses?.courses
+    )
+      ? studentCourses.courses.findIndex(
+          (item) => item.courseId === Number(id)
+        ) > -1
+      : false;
+
     res.status(200).json({
       success: true,
       data: ifStudentAlreadyBoughtCurrentCourse,
     });
   } catch (e) {
-    console.log(e);
+    console.error(e);
     res.status(500).json({
       success: false,
       message: "Some error occured!",

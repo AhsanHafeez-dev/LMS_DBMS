@@ -1,9 +1,10 @@
-import StudentCourses from "../../models/StudentCourses";
+
+import {prisma} from "../../prisma/index.js"
 
 const getCoursesByStudentId = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const studentBoughtCourses = await StudentCourses.findOne({
+    const studentBoughtCourses = await prisma.studentCourses.findUnique({
       userId: studentId,
     });
 
