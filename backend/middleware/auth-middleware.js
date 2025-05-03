@@ -1,16 +1,22 @@
-import { httpCodes } from "../constants";
-import { ApiError } from "../utils/ApiError";
-import jwt from "jsonwebtoken"
+import { httpCodes } from "../constants.js";
+import { ApiError } from "../utils/ApiError.js";
+// import jwt from "jsonwebtoken"
+import jwt  from "jsonwebtoken"
+import { ApiResponse } from "../utils/ApiResponse.js";
 const verfiyToken = async (secret, token) => {
     return await jwt.verify(token,secret)
  }
 const authenticate = async (req, res, next) => {
-    const authHeader = req.header.authorization;
-    if (!header) {
-        throw new ApiError(httpCodes.unauthorized,"user is not authenticated")
+    console.log(req.cookies);
+    const authHeader = req.header.authorization || req.cookies?.accessToken;
+    if (!authHeader) {
+        console.log("unauthorized user in auth middleware");
+        return res.status(httpCodes.unauthorized).json(new ApiResponse(httpCodes.unauthorized,{},"please login first"))
+        // throw new ApiError(httpCodes.unauthorized, "user is not authenticated");
+        // return;
     }
     const token = authHeader.split(' ')[1];
-    const payload = await verfiyToken(process.env.ACCESS_TOKEN_SECRET, token);
+    const payload = await verfiyToken(process.env.ACCESS_TOKEN_SECRET, token || authHeader);
     req.user = payload;
     next();
 

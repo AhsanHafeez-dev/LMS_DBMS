@@ -4,9 +4,9 @@ import {
   capturePaymentAndFinalizeOrder,
 } from "../../controllers/student-controller/order-controller.js";
 
-const router = express.Router();
+const studentViewOrderRoutes = express.Router();
 
-router.post("/create", createOrder);
-router.post("/capture", capturePaymentAndFinalizeOrder);
+studentViewOrderRoutes.post("/create", createOrder);
+studentViewOrderRoutes.post("/capture", capturePaymentAndFinalizeOrder);
 
-export { router };
+export { studentViewOrderRoutes };

@@ -1,14 +1,16 @@
 import { prisma } from "../../prisma/index.js";
-
-export const getAllStudentViewCourses = async (req, res) => {
+import { httpCodes } from "../../constants.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
+const getAllStudentViewCourses = async (req, res) => {
   try {
+    console.log("request got")
     // Optional: fetch all courses (if you still need this in l)
-    const l = await prisma.course.findMany();
-
+    const courseList = await prisma.course.findMany();
+    if (courseList.length == 0) { return res.status(httpCodes.notFound).json(new ApiResponse(httpCodes.notFound,{},"no course exist")); }
     const {
-      category = "",
-      level = "",
-      primaryLanguage = "",
+      category = [],
+      level = [],
+      primaryLanguage = [],
       sortBy = "price-lowtohigh",
     } = req.query;
 
@@ -42,12 +44,19 @@ export const getAllStudentViewCourses = async (req, res) => {
       default:
         sortParam = { pricing: "asc" };
     }
-
+    console.log(filters, "filters");
+    console.log(sortParam, "param sort");
     const coursesList = await prisma.course.findMany({
       where: filters,
       orderBy: sortParam,
     });
-
+    for (let i = 0; i < coursesList.length; i++) {
+      console.log("got lectures");
+      let lectures = await prisma.lecture.findMany({ where: { courseId: coursesList[i].id } });
+      // console.log(lectures);
+      coursesList[i].lectures = lectures;
+    }
+    console.log(coursesList)
     res.status(200).json({
       success: true,
       data: coursesList,
@@ -61,7 +70,7 @@ export const getAllStudentViewCourses = async (req, res) => {
   }
 };
 
-export const getStudentViewCourseDetails = async (req, res) => {
+const getStudentViewCourseDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const courseDetails = await prisma.course.findUnique({
@@ -89,20 +98,16 @@ export const getStudentViewCourseDetails = async (req, res) => {
   }
 };
 
-export const checkCoursePurchaseInfo = async (req, res) => {
+const checkCoursePurchaseInfo = async (req, res) => {
   try {
     const { id, studentId } = req.params;
-    const studentCourses = await prisma.studentCourses.findUnique({
-      where: { userId: Number(studentId) },
+    
+    const studentCourses = await prisma.studentCourse.findFirst({
+      where: { userId: studentId,courseId:id },
     });
-
-    const ifStudentAlreadyBoughtCurrentCourse = Array.isArray(
-      studentCourses?.courses
-    )
-      ? studentCourses.courses.findIndex(
-          (item) => item.courseId === Number(id)
-        ) > -1
-      : false;
+    console.log(studentId, " student ",id, "course ");
+    console.log(studentCourses);
+    const ifStudentAlreadyBoughtCurrentCourse = studentCourses ? true : false;
 
     res.status(200).json({
       success: true,
