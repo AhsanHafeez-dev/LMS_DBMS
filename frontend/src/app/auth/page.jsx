@@ -11,9 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signInFormControls, signUpFormControls } from "@/config";
 import {useAuthContext } from "@/context/auth-context";
-import { GraduationCap } from "lucide-react";
 import {useState } from "react";
-
 
 function AuthPage() {
   const [activeTab, setActiveTab] = useState("signin");

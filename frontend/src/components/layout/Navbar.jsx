@@ -1,9 +1,9 @@
 "use client";
+
 import React from "react";
 import { Button } from "../ui/button";
 import { MdVideoLibrary } from "react-icons/md";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuthContext } from "@/context/auth-context";
 
 function Navbar() {

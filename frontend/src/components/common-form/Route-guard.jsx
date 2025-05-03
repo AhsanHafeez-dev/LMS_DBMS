@@ -1,5 +1,5 @@
-
 'use client'
+
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -8,7 +8,7 @@ export default function RouteGuard({ authenticated, user, children }) {
   const pathname = usePathname()
 
   useEffect(() => {
-    console.log(authenticated, user, "useruser")
+
 
     if (!authenticated && !pathname.includes('/auth')) {
       router.replace('/auth')

@@ -1,9 +1,8 @@
 "use client"
 
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AuthContext from "@/context/auth-context";
+import AuthContext, { useAuthContext } from "@/context/auth-context";
 import InstructorContext from "@/context/instructor-context";
 import StudentProvider from "@/context/student-context"
 import RouteGuard from "@/components/common-form/Route-guard"
@@ -21,9 +20,10 @@ const geistMono = Geist_Mono({
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}) {
+
+  const {auth} = useAuthContext() || {}
+
   return (
     <html lang="en">
       <body
@@ -33,8 +33,8 @@ export default function RootLayout({
           <InstructorContext>
          <StudentProvider>
         <RouteGuard
-        authenticated={true}
-        user={{role:"student"}}
+        authenticated={auth?.authenticate}
+        user={auth?.user}
         >
         {children}
         </RouteGuard>
