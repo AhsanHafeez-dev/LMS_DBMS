@@ -12,6 +12,7 @@ import { useParams, useRouter } from "next/navigation";
 import { getCurrentCourseProgressService, markLectureAsViewedService, resetCourseProgressService} from "@/services"
 import React, { useEffect, useState } from "react";
 import Confetti from "react-confetti"
+import { addSyntheticLeadingComment } from "typescript";
 
 function page() {
   const { auth } = useAuthContext();
@@ -92,6 +93,7 @@ function page() {
       fetchCurrentCourseProgress();
     }
   }
+
 
 
   useEffect(() => {
