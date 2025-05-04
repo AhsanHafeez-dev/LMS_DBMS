@@ -1,14 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useInstructorContext } from "@/context/instructor-context";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { mediaUploadService, mediaDeleteService } from "@/services";
+import { mediaUploadService, mediaDeleteService, mediaBulkUploadService } from "@/services";
 import MediaProgressBar from "@/components/shared/MediaProgessBar";
-import VideoPLayer from "@/components/shared/VideoPlayer";
 import { IoMdCloudUpload } from "react-icons/io";
+import VideoPlayer from "@/components/shared/VideoPlayer";
+import { Upload } from "lucide-react";
 
 function CourseCurriculum() {
   const {
@@ -19,6 +20,8 @@ function CourseCurriculum() {
     mediaUploadProgressPercentage,
     setMediaUploadProgressPercentage,
   } = useInstructorContext();
+
+  const bulkUploadInputRef = useRef(null);
 
   const handleAddLecture = () => {
     setCourseCurriculumFormData([
@@ -111,6 +114,60 @@ function CourseCurriculum() {
     }
   }
 
+  function handleOpenBulkUploadDialog() {
+    bulkUploadInputRef.current?.click();
+  }
+
+  function areAllCourseCurriculumFormDataObjectsEmpty(arr) {
+    return arr.every((obj) => {
+      return Object.entries(obj).every(([key, value]) => {
+        if (typeof value === "boolean") {
+          return true;
+        }
+        return value === "";
+      });
+    });
+  }
+
+  async function handleMediaBulkUpload(event) {
+    const selectedFiles = Array.from(event.target.files);
+    const bulkFormData = new FormData();
+
+    selectedFiles.forEach((fileItem) => bulkFormData.append("files", fileItem));
+
+    try {
+      setMediaUploadProgress(true);
+      const response = await mediaBulkUploadService(
+        bulkFormData,
+        setMediaUploadProgressPercentage
+      );
+
+      console.log(response, "bulk");
+      if (response?.success) {
+        let cpyCourseCurriculumFormdata =
+          areAllCourseCurriculumFormDataObjectsEmpty(courseCurriculumFormData)
+            ? []
+            : [...courseCurriculumFormData];
+
+        cpyCourseCurriculumFormdata = [
+          ...cpyCourseCurriculumFormdata,
+          ...response?.data.map((item, index) => ({
+            videoUrl: item?.url,
+            public_id: item?.public_id,
+            title: `Lecture ${
+              cpyCourseCurriculumFormdata.length + (index + 1)
+            }`,
+            freePreview: false,
+          })),
+        ];
+        setCourseCurriculumFormData(cpyCourseCurriculumFormdata);
+        setMediaUploadProgress(false);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async function handleDeleteLecture(currentIndex) {
     let cpyCourseCurriculumFormData = [...courseCurriculumFormData];
     const getCurrentSelectedVideoPublicId = cpyCourseCurriculumFormData[currentIndex].public_id;
@@ -129,10 +186,31 @@ function CourseCurriculum() {
   return (
     <>
       <Card className="bg-[#101d38] border border-slate-400">
-        <CardHeader>
+        <CardHeader  className="flex justify-between items-center flex-row">
           <CardTitle className="font-bold text-lg text-text">
             Course Curriculum
           </CardTitle>
+          <div>
+          <input
+            type="file"
+            ref={bulkUploadInputRef}
+            accept="video/*"
+            multiple
+            className="hidden"
+            id="bulk-media-upload"
+            onChange={handleMediaBulkUpload}
+          />
+          <Button
+            as="label"
+            htmlFor="bulk-media-upload"
+            variant="outline"
+            className="cursor-pointer mb-2 mt-3"
+            onClick={handleOpenBulkUploadDialog}
+          >
+            <Upload className="w-4 h-5 mr-2" />
+            Bulk Upload
+          </Button>
+        </div>
         </CardHeader>
         <CardContent>
           <Button
@@ -183,7 +261,7 @@ function CourseCurriculum() {
                 <div className="mt-5">
                   {courseCurriculumFormData[index]?.videoURL ? (
                     <div className="flex gap-3">
-                      <VideoPLayer
+                      <VideoPlayer
                         url={courseCurriculumFormData[index]?.videoUrl}
                         width="450px"
                         height="200px"

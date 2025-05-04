@@ -2,8 +2,6 @@
 
 import MediaProgressBar from "@/components/shared/MediaProgessBar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useInstructorContext } from "@/context/instructor-context";
 import { mediaUploadService } from "@/services";
 import { IoMdCloudUpload } from "react-icons/io";
@@ -72,6 +70,7 @@ function CourseSettings() {
                       onChange={handleImageUploadChange}
                       type="file"
                       accept="image/*"
+                      id="upload"
                     ></input>
                 </div>
         )}

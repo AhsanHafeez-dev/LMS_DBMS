@@ -1,11 +1,13 @@
 "use client"
 
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
-import AuthContext, { useAuthContext } from "@/context/auth-context";
+import AuthProvider, { useAuthContext } from "@/context/auth-context";
 import InstructorContext from "@/context/instructor-context";
 import StudentProvider from "@/context/student-context"
-import RouteGuard from "@/components/common-form/Route-guard"
+import RouteGuard from "../components/common-form/Route-guard";
+
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,29 +20,37 @@ const geistMono = Geist_Mono({
 });
 
 
-export default function RootLayout({
-  children,
-}) {
+function ProtectedLayout({ children }) {
+  const { auth } = useAuthContext();
+  console.log(auth);
 
-  const {auth} = useAuthContext() || {}
+  return (
+    <RouteGuard 
+      authenticated={auth.autheticate} 
+      user={auth.user}
+    >
+      {children}
+    </RouteGuard>
+  );
+}
+
+export default function RootLayout({ children}) {
+
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
       >
-        <AuthContext>
+        <AuthProvider>
           <InstructorContext>
          <StudentProvider>
-        <RouteGuard
-        authenticated={auth?.authenticate}
-        user={auth?.user}
-        >
-        {children}
-        </RouteGuard>
+          <ProtectedLayout>
+         {children}
+         </ProtectedLayout>
         </StudentProvider>
         </InstructorContext>
-        </AuthContext>
+        </AuthProvider>
       </body>
     </html>
   );

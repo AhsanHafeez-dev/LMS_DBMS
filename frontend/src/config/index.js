@@ -1,6 +1,3 @@
-
-
-
 export const signUpFormControls= [
     {
       name: "userName",
@@ -54,7 +51,7 @@ export const signUpFormControls= [
     password: "",
   };
 
-  //add Course
+
 
   export const languageOptions = [
     { id: "english", label: "English" },
@@ -169,14 +166,9 @@ export const signUpFormControls= [
     image:""
   }
 
-  type CourseCurriculumItem = {
-    title: string;
-    videoUrl: string;
-    freePreview: boolean;
-    public_id: string;
-  };
 
-  export const courseCurriculumInitialFormData:CourseCurriculumItem[] = [
+
+  export const courseCurriculumInitialFormData= [
     {
       title: "",
       videoUrl: "",

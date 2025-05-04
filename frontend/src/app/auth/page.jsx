@@ -10,11 +10,14 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signInFormControls, signUpFormControls } from "@/config";
-import {useAuthContext } from "@/context/auth-context";
-import {useState } from "react";
+import { useAuthContext } from "@/context/auth-context";
+import { useState } from "react";
+import { Toaster } from "react-hot-toast";
 
 function AuthPage() {
   const [activeTab, setActiveTab] = useState("signin");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const {
     signInFormData,
     setSignInFormData,
@@ -22,7 +25,7 @@ function AuthPage() {
     setSignUpFormData,
     handleRegisterUser,
     handleLoginUser,
-  } = useAuthContext()
+  } = useAuthContext();
 
   function handleTabChange(value) {
     setActiveTab(value);
@@ -45,10 +48,30 @@ function AuthPage() {
     );
   }
 
-  console.log(signInFormData);
+
+  async function handleSignIn(event) {
+    setIsSubmitting(true);
+    try {
+      await handleLoginUser(event);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleSignUp(event) {
+    setIsSubmitting(true);
+    try {
+      await handleRegisterUser(event);
+
+      setActiveTab("signin");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
+      <Toaster position="top-center" />
       <div className="flex items-center justify-center min-h-screen bg-[#060f1d]">
         <Tabs
           value={activeTab}
@@ -71,11 +94,11 @@ function AuthPage() {
               <CardContent className="space-y-2">
                 <CommonForm
                   formControls={signInFormControls}
-                  buttonText={"Sign In"}
+                  buttonText={isSubmitting ? "Signing In..." : "Sign In"}
                   formData={signInFormData}
                   setFormData={setSignInFormData}
-                  isButtonDisabled={!checkIfSignInFormIsValid()}
-                  handleSubmit={handleLoginUser}
+                  isButtonDisabled={!checkIfSignInFormIsValid() || isSubmitting}
+                  handleSubmit={handleSignIn}
                 />
               </CardContent>
             </Card>
@@ -91,11 +114,11 @@ function AuthPage() {
               <CardContent className="space-y-2">
                 <CommonForm
                   formControls={signUpFormControls}
-                  buttonText={"Sign Up"}
+                  buttonText={isSubmitting ? "Signing Up..." : "Sign Up"}
                   formData={signUpFormData}
                   setFormData={setSignUpFormData}
-                  isButtonDisabled={!checkIfSignUpFormIsValid()}
-                  handleSubmit={handleRegisterUser}
+                  isButtonDisabled={!checkIfSignUpFormIsValid() || isSubmitting}
+                  handleSubmit={handleSignUp}
                 />
               </CardContent>
             </Card>

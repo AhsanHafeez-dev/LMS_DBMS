@@ -11,7 +11,6 @@ function CommonForm({
 }) {
   return (
     <form onSubmit={handleSubmit}>
-      {/* render form controls here */}
       <FormControls
         formControls={formControls}
         formData={formData}

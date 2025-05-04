@@ -19,6 +19,7 @@ export default function Hero() {
   const {auth} = useAuthContext()
   const router = useRouter()
 
+
   async function fetchAllStudentViewCourses() {
     const response = await fetchStudentViewCourseListService();
     if (response?.success) {
