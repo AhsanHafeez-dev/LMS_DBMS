@@ -5,9 +5,9 @@ import  {
   resetCurrentCourseProgress,
 } from "../../controllers/student-controller/course-progress-controller.js";
 
-const router = express.Router();
+const studentCourseProgressRoutes = express.Router();
 
-router.get("/get/:userId/:courseId", getCurrentCourseProgress);
-router.post("/mark-lecture-viewed", markCurrentLectureAsViewed);
-router.post("/reset-progress", resetCurrentCourseProgress);
-export {router}
+studentCourseProgressRoutes.get("/get/:userId/:courseId", getCurrentCourseProgress);
+studentCourseProgressRoutes.post("/mark-lecture-viewed", markCurrentLectureAsViewed);
+studentCourseProgressRoutes.post("/reset-progress", resetCurrentCourseProgress);
+export {studentCourseProgressRoutes}

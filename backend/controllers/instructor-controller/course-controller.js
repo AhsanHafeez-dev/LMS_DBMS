@@ -4,12 +4,19 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import { ApiError } from "../../utils/ApiError.js";''
 const addNewCourse = async (req, res) => {
     try {
-        const courseData = req.body;
+      const courseData = req.body;
+      
+      
+
         const saveCourse = await prisma.course.create({ data: courseData });
         if(saveCourse) res.status(httpCodes.created).json(new ApiResponse(httpCodes.created,saveCourse," course created successfully"))
-        else{throw new ApiError(httpCodes.badGateway," cannot save new course")}
+        else {
+          return res.status(httpCodes.badGateway)
+          .json(    new ApiResponse(httpCodes.badGateway, {}, "cannot save new course" ) );
+        }
     } catch (error) {
-        console.log(error)
+      console.log(error)
+      return res.status(httpCodes.serverSideError, {}, error.message);
         throw new ApiError(httpCodes.serverSideError, error.message);
     }
 }
@@ -27,7 +34,8 @@ const getAllCourses = async (req, res) => {
 
 const getCourseDetails = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+    id = parseInt(id);
 
     const course=await prisma.course.findUnique({
       where: {
@@ -46,21 +54,28 @@ const getCourseDetails = async (req, res) => {
 
 const updateCourseById = async (req, res) => {
   try {
-    const {id} = req.params;
-    const courseDetails  = req.body;
+    let { id } = req.params;
+    id = parseInt(id);
+    const courseDetails = req.body;
+    
     const updatedCourse=await prisma.course.update({
       where: {
         id
       },
       data:courseDetails
     });
+    if(!updatedCourse){return res
 
-    if(!updatedCourse){throw new ApiError(httpCodes,httpCodes.notFound,"course can't be updated")}
+      .status(httpCodes.notFound)
+      .json(new ApiResponse(httpCodes.notFound, {}, "course didnot exiits"));}
     
-    req.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok, updatedCourse, "updated"))
+    res.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok, updatedCourse, "updated"))
     
   } catch (error) {
     console.log(error);
+    return res
+      .status(httpCodes.serverSideError)
+      .json(new ApiResponse(httpCodes.serverSideError, {},error.message));
     throw new ApiError(httpCodes.serverSideError, error.message);
   }
 };

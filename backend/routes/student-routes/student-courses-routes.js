@@ -3,8 +3,8 @@ import  {
   getCoursesByStudentId,
 } from "../../controllers/student-controller/student-courses-controller.js";
 
-const router = express.Router();
+const studentCoursesRoutes = express.Router();
 
-router.get("/get/:studentId", getCoursesByStudentId);
+studentCoursesRoutes.get("/get/:studentId", getCoursesByStudentId);
 
-module.exports = router;
+export {studentCoursesRoutes}

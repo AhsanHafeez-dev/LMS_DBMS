@@ -1,8 +1,6 @@
 import {PrismaClient} from "@prisma/client"
 
-try {
-    const prisma = new PrismaClient();
-} catch (error) {
-    console.log(error)
-}
+const prisma = new PrismaClient();
+const l = await prisma.studentCourse.findMany()
+console.log(l);
 export { prisma };

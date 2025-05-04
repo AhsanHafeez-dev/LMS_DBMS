@@ -6,24 +6,27 @@ import { httpCodes } from "../../constants.js";
 import {
   uploadMediaToCloudinary,
   deleteMediaFromCloudinary,
-} from "../../helpers/cloudinary.js";
+} from "../../utils/cloudinary.js";
 
-const router = express.Router();
+const mediaRoutes = express.Router();
 
-const upload = multer({ dest: "uploads/" });
+const upload = multer({ dest: "uploads/"});
+// import {upload} from "../../middleware/multer.middleware.js"
 
-router.post("/upload", upload.single("file"), async (req, res) => {
+mediaRoutes.route("/upload").post( upload.single("file"), async (req, res) => {
   try {
+    console.log(`uploading ${req.file.path}`)
     const result = await uploadMediaToCloudinary(req.file.path);
-    res.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok,result,"video uploaded successfully"));
+    return res.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok,result,"video uploaded successfully"));
   } catch (e) {
     console.log(e);
+    return res.status(httpCodes.serverSideError,{},"cannot upload to cloudinary");
 
-    throw new ApiError(httpCodes.serverSideError,"cannot upload to cloudinary")
+    // throw new ApiError(httpCodes.serverSideError,"cannot upload to cloudinary")
   }
 });
 
-router.delete("/delete/:id", async (req, res) => {
+mediaRoutes.route("/delete/:id").delete(async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -33,15 +36,17 @@ router.delete("/delete/:id", async (req, res) => {
 
     await deleteMediaFromCloudinary(id);
 
-    res.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok,{},"Asset deleted "));
+    res
+      .status(httpCodes.ok)
+      .json(new ApiResponse(httpCodes.ok, {}, "Asset deleted "));
   } catch (e) {
     console.log(e);
 
-    throw new ApiError(httpCodes.serverSideError,"Error deleting asset")
+    throw new ApiError(httpCodes.serverSideError, "Error deleting asset");
   }
 });
 
-router.post("/bulk-upload", upload.array("files", 10), async (req, res) => {
+mediaRoutes.route("/bulk-upload").post( upload.array("files", 10), async (req, res) => {
   try {
     const uploadPromises = req.files.map((fileItem) =>
       uploadMediaToCloudinary(fileItem.path)
@@ -57,4 +62,4 @@ router.post("/bulk-upload", upload.array("files", 10), async (req, res) => {
   }
 });
 
-export { router };
+export { mediaRoutes };

@@ -4,10 +4,10 @@ import {
   getAllStudentViewCourses,
   checkCoursePurchaseInfo,
 } from "../../controllers/student-controller/course-controller.js";
-const router = express.Router();
+const studentViewCourseRoutes = express.Router();
 
-router.get("/get", getAllStudentViewCourses);
-router.get("/get/details/:id", getStudentViewCourseDetails);
-router.get("/purchase-info/:id/:studentId", checkCoursePurchaseInfo);
+studentViewCourseRoutes.get("/get", getAllStudentViewCourses);
+studentViewCourseRoutes.get("/get/details/:id", getStudentViewCourseDetails);
+studentViewCourseRoutes.get("/purchase-info/:id/:studentId", checkCoursePurchaseInfo);
 
-export { router };
+export { studentViewCourseRoutes };
