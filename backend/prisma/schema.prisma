@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// 
+
+model User {
+  id        Int    @id @default(autoincrement())
+  userName  String @unique
+  userEmail String @unique
+  password  String
+  role      String
+  
+}
+/// Core course data
+
+model Course {
+  id              Int             @id @default(autoincrement())
+  instructorId    String
+  instructorName  String
+  date            DateTime?     @default(now())
+  title           String
+  category        String
+  level           String
+  primaryLanguage String
+  subtitle        String
+  description     String
+  image           String
+  welcomeMessage  String
+  pricing         Float
+  objectives      String
+  isPublished     Boolean
+  curriculum        Lecture[]       @relation("CourseLectures")
+  students        CourseStudent[] @relation("CourseEnrollments")
+}
+
+/// Individual lectures in a course
+model Lecture {
+  id          Int     @id @default(autoincrement())
+  title       String
+  videoUrl    String
+  publicId    String  @map("public_id")
+  freePreview Boolean
+  course      Course?  @relation("CourseLectures", fields: [courseId], references: [id])
+  courseId    Int?
+
+  @@index([courseId])
+}
+
+/// Join table: which students are enrolled in which course
+model CourseStudent {
+  id           Int    @id @default(autoincrement())
+  studentId    String
+  studentName  String
+  studentEmail String
+  paidAmount   Float
+  course       Course @relation("CourseEnrollments", fields: [courseId], references: [id])
+  courseId     Int
+
+  @@index([courseId])
+  @@index([studentId])
+}
+
+/// Tracks overall progress per user & course
+model CourseProgress {
+  id              String            @id @default(cuid())
+  userId          String
+  courseId        String
+  completed       Boolean
+  completionDate  DateTime?
+  lectureProgress LectureProgress[]
+
+  @@index([userId, courseId])
+}
+
+/// Progress on each lecture within a course
+model LectureProgress {
+  id               String         @id @default(cuid())
+  lectureId        Int
+  viewed           Boolean
+  dateViewed       DateTime?
+  courseProgress   CourseProgress @relation(fields: [courseProgressId], references: [id])
+  courseProgressId String
+
+  @@index([lectureId])
+}
+
+/// All orders placed by users
+model Order {
+  id             String   @id @default(cuid())
+  userId         String
+  userName       String
+  userEmail      String
+  orderStatus    String
+  paymentMethod  String
+  paymentStatus  String
+  orderDate      DateTime
+  paymentId      String?
+  payerId        String?
+  instructorId   String
+  instructorName String
+  courseImage    String
+  courseTitle    String
+  courseId       String
+  coursePricing  Float
+
+  @@index([userId])
+}
+
+/// (Alternative) If you prefer simply listing purchases per user,
+/// you could drop `CourseStudent` and use this instead:
+model StudentCourse {
+  id             String   @id @default(cuid())
+  userId         String
+  courseId       String
+  title          String
+  instructorId   String
+  instructorName String
+  dateOfPurchase DateTime
+  courseImage    String
+
+  @@index([userId])
+  @@index([courseId])
+}
