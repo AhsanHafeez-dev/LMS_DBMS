@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true,limit:"16kb" }));
 app.use(cookie())
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.CLIENTS_URL,
     methods: ["GET", "POST", "DELETE", "PUT"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })

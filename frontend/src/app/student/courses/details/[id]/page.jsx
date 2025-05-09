@@ -403,10 +403,10 @@ export default function Page() {
   }
 
   async function handleCreatePayment() {
-    if (!auth?.user?.id) {
-      console.error("User is not authenticated");
-      return;
-    }
+    // if (!auth?.user?.id) {
+    //   console.error("User is not authenticated");
+    //   return;
+    // }
 
     const paymentPayload = {
       userId: auth?.user?.id,
