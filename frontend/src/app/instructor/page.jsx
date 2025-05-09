@@ -14,10 +14,8 @@ import React, { useState } from 'react';
 function page() {
   const [activeTab, setActiveTab] = useState("dashboard");
 
- const { instructorCoursesList } = useInstructorContext()
   const { resetCredentials } = useAuthContext()
   const {auth} = useAuthContext()
-  console.log(auth);
 
 //  async function fetchAllCourses() {
 //   const response = await fetchInstructorCourseListService();

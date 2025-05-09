@@ -96,8 +96,6 @@ function CourseCurriculum() {
   }
 
 
-  console.log("cursecurriculum",courseCurriculumFormData);
-
 
 
 
@@ -259,7 +257,7 @@ function CourseCurriculum() {
                     />
                     <label
                       className="text-text"
-                      for={`freePreview-${lecture.public_id || index}`}
+                      htmlFor={`freePreview-${lecture.public_id || index}`}
                     >
                       Free Preview
                     </label>
@@ -287,7 +285,7 @@ function CourseCurriculum() {
                     <div className="rounded-md border border-indigo-500 bg-gray-50 p-0.75 shadow-md w-44">
                     <label htmlFor="upload" className="flex flex-row items-center gap-2 cursor-pointer">
                      <IoMdCloudUpload size={32} className="text-blue-500"/>
-                      <span class="text-gray-600 font-medium">Upload file</span>
+                      <span className="text-gray-600 font-medium">Upload file</span>
                     </label>
                      <input
                       className="hidden"

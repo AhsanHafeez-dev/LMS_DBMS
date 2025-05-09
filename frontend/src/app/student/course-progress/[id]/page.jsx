@@ -22,56 +22,57 @@ function page() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [isSideBarOpen, setIsSideBarOpen] = useState(true);
   const { id } = useParams();
-  const  router = useRouter()
+  const  router = useRouter();
 
 
-  async function fetchCurrentCourseProgress() {
-    console.log("fetching current course progess  ")
-    const response = await getCurrentCourseProgressService(auth?.user?.id, id);
-    if (response?.success) {
-      if (!response?.data?.isPurchased) {
-        setLockCourse(true);
-      } else {
-        setStudentCurrentCourseProgress({
-          courseDetails: response?.data?.courseDetails,
-          progress: response?.data?.progress,
-        });
 
-        if (response?.data?.completed) {
-          setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
-          setShowCourseCompleteDialog(true);
-          setShowConfetti(true);
-
-          return;
-        }
-
-        if (response?.data?.progress?.length === 0) {
-          setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
+ async function fetchCurrentCourseProgress(){
+  const response = await getCurrentCourseProgressService(auth.id, id);
+  if (response?.success) {
+        if (!response?.data?.isPurchased) {
+          setLockCourse(true);
         } else {
-          console.log("logging here");
-          const lastIndexOfViewedAsTrue = response?.data?.progress.reduceRight(
-            (acc, obj, index) => {
-              return acc === -1 && obj.viewed ? index : acc;
-            },
-            -1
-          );
-
-          setCurrentLecture(
-            response?.data?.courseDetails?.curriculum[
-              lastIndexOfViewedAsTrue + 1
-            ]
-          );
+          setStudentCurrentCourseProgress({
+            courseDetails: response?.data?.courseDetails,
+            progress: response?.data?.progress,
+          });
+  
+          if (response?.data?.completed) {
+            setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
+            setShowCourseCompleteDialog(true);
+            setShowConfetti(true);
+  
+            return;
+          }
+  
+          if (response?.data?.progress?.length === 0) {
+            setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
+          } else {
+            console.log("logging here");
+            const lastIndexOfViewedAsTrue = response?.data?.progress.reduceRight(
+              (acc, obj, index) => {
+                return acc === -1 && obj.viewed ? index : acc;
+              },
+              -1
+            );
+  
+            setCurrentLecture(
+                response?.data?.courseDetails?.curriculum[
+                lastIndexOfViewedAsTrue + 1
+              ]
+            );
+          }
         }
       }
     }
-  }
+  
 
   async function updateCourseProgress() {
     if (currentLecture) {
       const response = await markLectureAsViewedService(
-        auth?.user?._id,
+        auth?.id,
         studentCurrentCourseProgress?.courseDetails?.id,
-        currentLecture._id
+        currentLecture.id
       );
 
       if (response?.success) {
@@ -82,8 +83,8 @@ function page() {
 
   async function handleRewatchCourse() {
     const response = await resetCourseProgressService(
-      auth?.user?._id,
-      studentCurrentCourseProgress?.courseDetails?._id
+      auth?.id,
+      studentCurrentCourseProgress?.courseDetails?.id
     );
 
     if (response?.success) {
@@ -96,9 +97,15 @@ function page() {
 
 
 
-  useEffect(() => {
+  useEffect(()=>{
     fetchCurrentCourseProgress();
-  }, [id]);
+  },[id])
+
+  useEffect(()=>{
+    console.log("course progress : ",studentCurrentCourseProgress);
+  },[id])
+
+
 
   useEffect(() => {
     if (currentLecture?.progressValue === 1) updateCourseProgress();
@@ -107,9 +114,6 @@ function page() {
   useEffect(() => {
     if (showConfetti) setTimeout(() => setShowConfetti(false), 15000);
   }, [showConfetti]);
-
-  console.log(currentLecture, "currentLecture");
-
 
 
 
@@ -121,7 +125,7 @@ function page() {
       <div className="flex items-center justify-between p-4 bg-[#1c1d1f] border-b border-gray-700">
         <div className="flex items-center space-x-4">
           <Button
-            onClick={() => router.back()}
+            onClick={() => router.push("/student/my-courses")}
             className="text-black"
             variant="ghost"
             size="sm"
@@ -151,7 +155,7 @@ function page() {
             <span className="text-2xl">Video Player Placeholder</span>
           </div>
           <div className="p-6 bg-[#1c1d1f]">
-            <h2 className="text-2xl font-bold mb-2">{currentLecture.title}</h2>
+            <h2 className="text-2xl font-bold mb-2">{currentLecture?.title}</h2>
           </div>
         </div>
         <div
@@ -181,16 +185,16 @@ function page() {
                     (item) => (
                       <div
                         className="flex items-center space-x-2 text-sm text-white font-bold cursor-pointer"
-                        key={item._id}
+                        key={item?.id}
                       >
                         {studentCurrentCourseProgress.progress.find(
-                          (progressItem) => progressItem.lectureId === item._id
+                          (progressItem) => progressItem?.lectureId === item?.id
                         )?.viewed ? (
                           <Check className="h-4 w-4 text-green-500" />
                         ) : (
                           <Play className="h-4 w-4" />
                         )}
-                        <span>{item.title}</span>
+                        <span>{item?.title}</span>
                       </div>
                     )
                   )}
@@ -202,7 +206,7 @@ function page() {
                 <div className="p-4">
                   <h2 className="text-xl font-bold mb-4">About this course</h2>
                   <p className="text-gray-400">
-                    {studentCurrentCourseProgress.courseDetails.description}
+                    {studentCurrentCourseProgress?.courseDetails?.description}
                   </p>
                 </div>
               </ScrollArea>
@@ -237,7 +241,7 @@ function page() {
         </DialogContent>
       </Dialog>
     </div>
-    </>
+    </> 
   )
 }
 

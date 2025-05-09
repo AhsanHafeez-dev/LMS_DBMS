@@ -46,7 +46,7 @@ export default function AuthProvider({ children }) {
       const data = await loginService(signInFormData);
 
     if (data.success) {
-      localStorage.setItem(
+      sessionStorage.setItem(
         "accessToken",
         JSON.stringify(data.data.accessToken)
       );
@@ -90,6 +90,8 @@ export default function AuthProvider({ children }) {
         setAuth({
           authenticate: true,
           user: data.data.role,
+          id:data.data.id,
+          userName:data.data.userName,
         });
         setLoading(false);
       } else {
@@ -104,7 +106,9 @@ export default function AuthProvider({ children }) {
       if (!error?.response?.data?.success) {
         setAuth({
           authenticate: false,
-          user: null,
+          userName: null,
+          role:null,
+          id:null
         });
         setLoading(false);
       }
@@ -115,6 +119,8 @@ export default function AuthProvider({ children }) {
     setAuth({
       authenticate: false,
       user: null,
+      id:null,
+      userName:null,
     });
   }
 

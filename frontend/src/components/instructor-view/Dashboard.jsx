@@ -117,8 +117,6 @@
 // export default InstructorDashboard;
 
 
-
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -192,7 +190,6 @@ function InstructorDashboard() {
 	);
 }
 
-// Moved the function outside to keep the component clean
 function calculateTotalStudentsAndProfit(courses) {
 	return courses.reduce(
 		(acc, course) => {

@@ -61,7 +61,7 @@ function CourseSettings() {
           <img src={courseLandingFormData.image} />
         ) : (
           <div class="rounded-md border border-indigo-500 bg-gray-50 p-0.75 shadow-md w-44">
-                    <label for="upload" class="flex flex-row items-center gap-2 cursor-pointer">
+                    <label htmlFor="upload" className="flex flex-row items-center gap-2 cursor-pointer">
                      <IoMdCloudUpload size={32} className="text-blue-500"/>
                       <span class="text-gray-600 font-medium">Upload file</span>
                     </label>

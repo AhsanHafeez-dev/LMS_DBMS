@@ -16,7 +16,9 @@ import { filterOptions, sortOptions } from '@/config';
 import { useAuthContext } from "@/context/auth-context";
 import { useStudentContext } from '@/context/student-context';
 import { checkCoursePurchaseInfoService, fetchStudentViewCourseListService } from "@/services";
+import CourseLoader from "@/components/shared/Course-loader"
 import { FilterIcon } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -24,7 +26,7 @@ import React, { useEffect, useState } from 'react';
 function page() {
 const [sort , setSort] = useState("price-lowtohigh")
 const [filters, setFilters] = useState({});
-
+const [loading,setLoading] = useState(true)
 const router = useRouter()
 
 const { auth } = useAuthContext()
@@ -81,10 +83,9 @@ async function fetchAllStudentViewCourses(filters, sort) {
     getCurrentCourseId,
     auth?.id,
     );
-    console.log(response);
+  
 
   if (response?.success) {
-    console.log(response);
     if (response?.data) {
     router.push(`/student/course-progress/${getCurrentCourseId}`);
     } else {
@@ -180,25 +181,26 @@ useEffect(() => {
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-            <span className="text-sm text-black font-bold">
+            <span className="text-sm text-black bg-white p-3 rounded-md font-bold">
               {studentViewCoursesList.length} Results
             </span>
             </div>
 
             <div className="space-y-4">
-            {studentViewCoursesList && studentViewCoursesList.length > 0 ? 
+            {studentViewCoursesList.length > 0 ? 
               studentViewCoursesList.map((courseItem) => (
-               <Link href={`/student/courses/details/${courseItem?.id}`}><Card
+               <Card
                   onClick={() => handleCourseNavigate(courseItem?.id)}
                   className="cursor-pointer border border-slate-700 bg-[#09203c]"
-                  key={courseItem?.id}
+               key={courseItem?.id}
                 >
                   <CardContent className="flex gap-4 p-4">
                     <div className="w-48 h-32 flex-shrink-0">
                       <img
+                        alt={courseItem?.title}
                         src={courseItem?.image}
                         className="w-ful h-full object-cover"
-                      />
+                      ></img>
                     </div>
                     <div className="flex-1">
                       <CardTitle className="text-mainheading font-semibold text-xl mb-2">
@@ -222,8 +224,10 @@ useEffect(() => {
                       </p>
                     </div>
                   </CardContent>
-                </Card></Link> 
-              )): (
+                </Card>
+              )): loading ? (
+                <CourseLoader/>  
+            ):(
               <h1 className="font-extrabold text-4xl text-mainheading text-center mr-10">No Courses Found</h1>
             )}
             </div>

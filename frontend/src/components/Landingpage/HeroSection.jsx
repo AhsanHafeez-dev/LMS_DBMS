@@ -9,21 +9,24 @@ import {
 } from "@/services";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Wrapper from "../shared/wrapper";
 import { Button } from "../ui/button";
+import CourseLoader from "@/components/shared/Course-loader"
 
 export default function Hero() {
   const { studentViewCoursesList, setStudentViewCoursesList } =
     useStudentContext();
   const {auth} = useAuthContext()
   const router = useRouter()
+  const [loading,setLoading] = useState(true)
 
 
   async function fetchAllStudentViewCourses() {
     const response = await fetchStudentViewCourseListService();
     if (response?.success) {
       setStudentViewCoursesList(response?.data);
+      setLoading(false)
     }
   }
 
@@ -39,25 +42,29 @@ export default function Hero() {
   }
 
   async function handleCourseNavigate(getCurrentCourseId) {
-    const response = await checkCoursePurchaseInfoService(
-      getCurrentCourseId,
-      auth?.user?._id
+    console.log("checking course purchase info");
+  const response = await checkCoursePurchaseInfoService(
+    getCurrentCourseId,
+    auth?.id,
     );
+  
 
-    if (response?.success) {
-      if (response?.data) {
-        router.push(`/course-progress/${getCurrentCourseId}`);
-      } else {
-        router.push(`/course/details/${getCurrentCourseId}`);
-      }
+  if (response?.success) {
+    if (response?.data) {
+    router.push(`/student/course-progress/${getCurrentCourseId}`);
+    } else {
+  router.push(`/student/courses/details/${getCurrentCourseId}`);
     }
   }
+}
+  
 
   useEffect(() => {
     fetchAllStudentViewCourses();
   }, []);
 
-  return (
+
+  return(
     <Wrapper>
       <div className="relative isolate overflow-hidden h-[85vh]">
         <div className="mx-auto py-12 lg:flex lg:items-center lg:gap-x-8 lg:px-8">
@@ -120,20 +127,19 @@ export default function Hero() {
         <h2 className="text-4xl font-semibold mb-10 text-mainheading">
           Featured Courses
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-7">
-          {studentViewCoursesList && setStudentViewCoursesList.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+          {setStudentViewCoursesList.length > 0 ? (
             studentViewCoursesList.map((courseItem) => (
               <div
-                key={courseItem._id}
-                onClick={() => handleCourseNavigate(courseItem?._id)}
-                className="border border-[#384B70] bg-[#12345f]  rounded-lg overflow-hidden shadow cursor-pointer"
+                key={courseItem.id}
+                onClick={() => handleCourseNavigate(courseItem?.id)}
+                className="border border-[#384B70] bg-[#1d3c61] max-w-sm rounded-lg overflow-hidden shadow cursor-pointer"
               >
                 <img
-                  src={courseItem?.image}
-                  width={300}
-                  height={150}
-                  className="w-full h-40 object-cover"
-                />
+                 src={courseItem?.image}
+                  className="w-full h-40"
+                  alt={courseItem.title}
+                ></img>
                 <div className="p-4">
                   <h3 className="font-bold text-lg mb-3 text-mainheading">
                     {courseItem?.title}
@@ -147,9 +153,12 @@ export default function Hero() {
                 </div>
               </div>
             ))
-          ) : (
-            <h1>No Courses Found</h1>
-          )}
+          ) : loading ? (
+            <CourseLoader/>
+          ):(
+         <h1 className="font-bold text-2xl text-mainheading text-center">No Courses Found</h1>
+          )
+          }
         </div>
       </section>
     </Wrapper>

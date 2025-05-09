@@ -30,7 +30,7 @@ const addNewCourse = async (req, res) => {
 const getAllCourses = async (req, res) => {
   try {
       console.log("handling request in instructor-controller/course-controller on getAllCourses controller")
-    const courseList = await prisma.course.findMany({});
+    const courseList = await prisma.course.findMany({include:{curriculum:true}});
     console.log("succesfully fetched courses sending reponse");
         res.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok, courseList, " course fetched successfully"));
         
@@ -48,8 +48,11 @@ const getCourseDetails = async (req, res) => {
     console.log("recieved data : ", req.params);
     const course=await prisma.course.findUnique({
       where: {
-        id
+        id,
+        
       },
+      include:{students:true,curriculum:true}
+      
     });
 
     if (course) { console.log("course fetched successfully"); res.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok, course, "course details fetched successfully"));}

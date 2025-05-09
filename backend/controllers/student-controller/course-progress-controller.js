@@ -145,6 +145,7 @@ export const getCurrentCourseProgress = async (req, res) => {
 
       const course = await prisma.course.findUnique({
         where: { id: Number(courseId) },
+        include:{curriculum:true}
       });
       if (!course) {
         console.log("course didnot exist");
@@ -167,6 +168,7 @@ export const getCurrentCourseProgress = async (req, res) => {
     // 2d) Otherwise, return existing progress
     const courseDetails = await prisma.course.findUnique({
       where: { id: Number(courseId) },
+      include: { curriculum: true },
     });
     return res.status(200).json({
       success: true,

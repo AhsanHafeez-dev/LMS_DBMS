@@ -28,6 +28,8 @@ function page() {
 
   const {auth} = useAuthContext();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false); 
+ 
 
   function isEmpty(value) {
     if (Array.isArray(value)) {
@@ -62,6 +64,9 @@ function page() {
 
   async function handleCreateCourse() {
 
+    try {
+      setIsSubmitting(true);
+
    const {pricing,...restOfData}=courseLandingFormData;
     const priceValue = parseFloat(pricing) || 0;
 
@@ -72,21 +77,20 @@ function page() {
       ...restOfData,
       pricing:priceValue,
       students: {
-        create: [] // For a new course with no students
-        // If you need to connect existing students, you would use:
-        // connect: [{ id: "student-id-1" }, { id: "student-id-2" }]
+        create: [] 
       },
-      curriculum: courseCurriculumFormData,
-      isPublished: true,
-    };
+      curriculum: {
+         create: courseCurriculumFormData.map(item => ({
+          title: item.title,
+          videoUrl: item.videoUrl,
+          freePreview: item.freePreview,
+          publicId:item.public_id,
+        })),
+    },
+    isPublished: true,
+  }
 
-    const response =
-      // currentEditedCourseId !== null
-      //   ? await updateCourseByIdService(
-      //       currentEditedCourseId,
-      //       courseFinalFormData
-      //     )
-       await addNewCourseService(courseFinalFormData);
+    const response = await addNewCourseService(courseFinalFormData);
 
     if (response?.success) {
       setCourseLandingFormData(courseLandingInitialFormData);
@@ -94,10 +98,14 @@ function page() {
       toast.success("Course created successfully!")
       router.back()
     }
-
-    console.log(courseFinalFormData, "courseFinalFormData");
-    console.log("type of", typeof(pricing));
+  } catch (error) {
+    console.error("Error submitting course:", error);
+  } finally {
+    setIsSubmitting(false);
   }
+}
+
+
   return (
     <>
       <Wrapper className="py-5 px-8">
@@ -112,7 +120,7 @@ function page() {
             disabled={!validateFormData()}
             onClick={handleCreateCourse}
           >
-            SUBMIT
+           {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
           </Button>
         </div>
         <Card className="rounded-md bg-[#384B70] border-none">
