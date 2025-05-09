@@ -12,6 +12,7 @@ import { Check, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import Confetti from "react-confetti";
+import ReactPlayer from 'react-player';
 
 function page() {
   const { auth } = useAuthContext();
@@ -26,8 +27,15 @@ function page() {
 
 
 
- async function fetchCurrentCourseProgress(){
-  const response = await getCurrentCourseProgressService(auth.id, id);
+  async function fetchCurrentCourseProgress() {
+    console.log("fetching curret course progress");
+    console.log("Data sending : ", auth.id, id)
+    let response;
+    if (auth.id && id) {
+      response = await getCurrentCourseProgressService(auth.id, id);
+    }
+    console.log("response of course progress  : ")
+    console.log(response);
   if (response?.success) {
         if (!response?.data?.isPurchased) {
           setLockCourse(true);
@@ -46,6 +54,8 @@ function page() {
           }
   
           if (response?.data?.progress?.length === 0) {
+            console.log("response in video ");
+            console.log(response);
             setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
           } else {
             console.log("logging here");
@@ -55,19 +65,23 @@ function page() {
               },
               -1
             );
-  
+            console.log("response in video (2)");
+            console.log(response);
+            
             setCurrentLecture(
                 response?.data?.courseDetails?.curriculum[
                 lastIndexOfViewedAsTrue + 1
               ]
             );
+            console.log(currentLecture);
           }
         }
       }
     }
   
-
+  
   async function updateCourseProgress() {
+    console.log("updating ");
     if (currentLecture) {
       const response = await markLectureAsViewedService(
         auth?.id,
@@ -82,6 +96,7 @@ function page() {
   }
 
   async function handleRewatchCourse() {
+    console.log("hadling rewatch");
     const response = await resetCourseProgressService(
       auth?.id,
       studentCurrentCourseProgress?.courseDetails?.id
@@ -97,7 +112,10 @@ function page() {
 
 
 
-  useEffect(()=>{
+  useEffect(() => {
+    if (!auth?.id || !id) return;
+    console.log("calling student for:", auth.id, id);
+    console.log("calling student ")
     fetchCurrentCourseProgress();
   },[id])
 
@@ -116,7 +134,7 @@ function page() {
   }, [showConfetti]);
 
 
-
+  console.log("returning")
 
   return (
     <>
@@ -152,7 +170,14 @@ function page() {
           } transition-all duration-300`}
         >
           <div className="w-full h-[500px] bg-black flex items-center justify-center">
-            <span className="text-2xl">Video Player Placeholder</span>
+          <ReactPlayer
+  url={currentLecture?.videoUrl}
+  controls
+  playing
+  width="100%"
+  height="500px"
+/>
+
           </div>
           <div className="p-6 bg-[#1c1d1f]">
             <h2 className="text-2xl font-bold mb-2">{currentLecture?.title}</h2>
@@ -181,23 +206,31 @@ function page() {
             <TabsContent value="content" className="h-full">
               <ScrollArea className="h-full">
                 <div className="p-4 space-y-4">
-                  {studentCurrentCourseProgress.courseDetails.curriculum.map(
-                    (item) => (
-                      <div
-                        className="flex items-center space-x-2 text-sm text-white font-bold cursor-pointer"
-                        key={item?.id}
-                      >
-                        {studentCurrentCourseProgress.progress.find(
-                          (progressItem) => progressItem?.lectureId === item?.id
-                        )?.viewed ? (
-                          <Check className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <Play className="h-4 w-4" />
-                        )}
-                        <span>{item?.title}</span>
-                      </div>
-                    )
-                  )}
+                {studentCurrentCourseProgress?.courseDetails?.curriculum.map(
+   (item) => {
+     const isActive = currentLecture?.id === item.id;
+     return (
+       <div
+         key={item.id}
+         onClick={() => setCurrentLecture(item)}
+         className={
+           `flex items-center space-x-2 text-sm font-bold cursor-pointer ` +
+           (isActive
+             ? "text-blue-400"
+             : "text-white hover:text-gray-300")
+         }
+       >
+         {studentCurrentCourseProgress.progress.find(
+           (p) => p.lectureId === item.id
+         )?.viewed
+           ? <Check className="h-4 w-4 text-green-500" />
+           : <Play className="h-4 w-4" />
+         }
+         <span>{item.title}</span>
+       </div>
+     );
+   }
+ )}
                 </div>
               </ScrollArea>
             </TabsContent>

@@ -42,10 +42,11 @@ export async function mediaDeleteService(id) {
 }
 
 export async function fetchInstructorCourseListService() {
-  console.log("fetching /instructor/course/get");
-  const { data } = await axiosInstance.get(`/instructor/course/get`);
+  // console.log("fetching /instructor/course/get");
+  // const { data } = await axiosInstance.get(`/instructor/course/get`);
 
-  return data;
+  
+  return null;
 }
 
 export async function addNewCourseService(formData) {

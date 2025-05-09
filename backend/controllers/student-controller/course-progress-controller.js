@@ -154,6 +154,8 @@ export const getCurrentCourseProgress = async (req, res) => {
           .json({ success: false, message: "Course not found" });
       }
       return res.status(200).json({
+        statusCode: 200,
+        stattus:200,
         success: true,
         message: "No progress found; you can start watching.",
         data: {
