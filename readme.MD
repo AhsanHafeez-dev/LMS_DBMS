@@ -26,7 +26,7 @@ Key features include:
 * **User Authentication & Authorization** (JWT-based)
 * **Course & Lecture Management**
 * **Media Uploads** (Cloudinary single & bulk)
-* **Payments** (PayPal & Stripe)
+* **Payments** (Stripe)
 * **Enrollment & Orders**
 * **Progress Tracking**
 
@@ -38,7 +38,7 @@ Key features include:
 * **Database**: Supabase (PostgreSQL)
 * **File Storage**: Cloudinary
 * **Authentication**: JSON Web Tokens (JWT)
-* **Payments**: PayPal REST SDK, Stripe
+* **Payments**: Stripe
 * **Environment Management**: dotenv
 
 ## 3. Getting Started
@@ -48,7 +48,7 @@ Key features include:
 * Node.js v18+ and npm (or yarn)
 * Supabase project (PostgreSQL)
 * Cloudinary account
-* PayPal and/or Stripe credentials
+* Stripe credentials
 
 ### 3.2 Common Setup
 

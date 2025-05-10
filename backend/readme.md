@@ -9,7 +9,7 @@ Key features:
 * **User Authentication & Authorization** (register, login, JWT-based sessions)
 * **Course Management** (create, update, retrieve courses)
 * **Lecture & Media Handling** (video uploads via Cloudinary with single/bulk endpoints)
-* **Purchases & Orders** (PayPal/Stripe integration for payments)
+* **Purchases & Orders** (Stripe integration for payments)
 * **Progress Tracking** (per-course and per-lecture progress for students)
 
 ## 2. Tech Stack
@@ -29,7 +29,7 @@ Key features:
 * Node.js v18+ and npm
 * a Supabase project (PostgreSQL database)
 * Cloudinary account
-* PayPal and/or Stripe credentials (optional)
+* and/or Stripe credentials (optional)
 
 ### 3.2 Installation
 
@@ -126,7 +126,7 @@ All endpoints are prefixed by the base URL where the server is mounted (e.g., `h
 
 | Method | Path                    | Handler       | Description                                |
 | ------ | ----------------------- | ------------- | ------------------------------------------ |
-| POST   | `/student/order/create` | `createOrder` | Create a new order (pay via PayPal/Stripe) |
+| POST   | `/student/order/create` | `createOrder` | Create a new order (pay via Stripe) |
 
 ### 4.6 Student’s Purchased Courses (`/student/courses-bought`)
 
