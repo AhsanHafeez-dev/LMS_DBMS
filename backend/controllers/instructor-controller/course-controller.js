@@ -115,8 +115,8 @@ const updateCourseById = async (req, res) => {
     let { id } = req.params;
     id = parseInt(id);
     const courseDetails = req.body;
-    console.log("recieved id : ", res.params);
-    console.log(req.body);
+    console.log("recieved id : ", req.params);
+    // console.log(req.body);
     const updatedCourse = await prisma.course.update({
       where: {
         id,
@@ -124,6 +124,7 @@ const updateCourseById = async (req, res) => {
       data: courseDetails,
       include: { students: true, curriculum: true },
     });
+    console.log(updatedCourse);
     if (!updatedCourse) {
       console.log("course not found");
       return res

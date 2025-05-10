@@ -121,7 +121,7 @@ const checkCoursePurchaseInfo = async (req, res) => {
     console.log("handling request in course controller's checkoutCoursePurchseInfo method");
     let { id,studentId } = req.params;
     if (!studentId) {
-      studentId = req.body?.studentId;
+      studentId = req.body?.studentId || "8";
     }
     console.log("data got id : ",id," studentId : ", studentId);
     const studentCourses = await prisma.studentCourse.findFirst({

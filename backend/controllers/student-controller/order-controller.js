@@ -14,7 +14,7 @@ const createOrder = async (req, res) => {
     let {
       userId = "8",
       userName = "Ahsan Hafeez",
-      userEmail = "ahsanhafeez725@gmail.com",
+      userEmail = "ahsanhafeez724@gmail.com",
       orderStatus = "completed",
       paymentMethod,
       paymentStatus,
@@ -175,7 +175,7 @@ const createOrder = async (req, res) => {
         },
       },
     });
-
+    console.log("courrse purchased");
     // 3) Return the URL to redirect your user to
     res.status(httpCodes.created).json({
       success: true,
