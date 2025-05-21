@@ -13,10 +13,13 @@ import { signInFormControls, signUpFormControls } from "@/config";
 import { useAuthContext } from "@/context/auth-context";
 import { useState } from "react";
 import { Toaster } from "react-hot-toast";
+import {validateSignUpForm} from "@/lib/validation"
+import { toast } from "react-hot-toast";
 
 function AuthPage() {
   const [activeTab, setActiveTab] = useState("signin");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
   
   const {
     signInFormData,
@@ -29,6 +32,7 @@ function AuthPage() {
 
   function handleTabChange(value) {
     setActiveTab(value);
+    setFormErrors({});
   }
 
   function checkIfSignInFormIsValid() {
@@ -48,7 +52,6 @@ function AuthPage() {
     );
   }
 
-
   async function handleSignIn(event) {
     setIsSubmitting(true);
     try {
@@ -59,15 +62,37 @@ function AuthPage() {
   }
 
   async function handleSignUp(event) {
+    event.preventDefault();
     setIsSubmitting(true);
+    
+    const validationResult = validateSignUpForm(signUpFormData);
+    
+    if (!validationResult.success) {
+      setFormErrors(validationResult.errors);
+      
+      const firstErrorField = Object.keys(validationResult.errors)[0];
+      if (firstErrorField) {
+        toast.error("Error signing up please check your email or password");
+      }
+      
+      setIsSubmitting(false);
+      return;
+    }
+    
+    setFormErrors({});
+    
     try {
       await handleRegisterUser(event);
-
       setActiveTab("signin");
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  const enhancedSignUpControls = signUpFormControls.map(control => ({
+    ...control,
+    error: formErrors[control.name]
+  }));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -113,7 +138,7 @@ function AuthPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <CommonForm
-                  formControls={signUpFormControls}
+                  formControls={enhancedSignUpControls}
                   buttonText={isSubmitting ? "Signing Up..." : "Sign Up"}
                   formData={signUpFormData}
                   setFormData={setSignUpFormData}
