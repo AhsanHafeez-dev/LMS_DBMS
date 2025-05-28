@@ -86,7 +86,7 @@ const getStudentViewCourseDetails = async (req, res) => {
     console.log("data recieved id : ", id);
     
     const courseDetails = await prisma.course.findUnique({
-      where: { id: Number(id) },
+      where: { id: Number(id) },include:{students:true}
     });
     
     if (!courseDetails) {

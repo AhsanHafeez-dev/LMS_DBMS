@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { httpCodes } from "../../constants.js";
 import { prisma } from "../../prisma/index.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -12,7 +13,7 @@ const createOrder = async (req, res) => {
     console.log("recieved data : ", req.body);
 
     let {
-      userId = "8",
+      userId = "",
       userName = "Ahsan Hafeez",
       userEmail = "ahsanhafeez724@gmail.com",
       orderStatus = "completed",
@@ -29,7 +30,10 @@ const createOrder = async (req, res) => {
       coursePricing=49.99,
     } = req.body;
     courseId += "";
-
+    if (!userId) {
+      return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest, {}, "userid not fouund"));
+    }
+    userId += "";
     // 1) Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -77,14 +81,14 @@ const createOrder = async (req, res) => {
       },
     });
 
-    let order = await prisma.order.findFirst({ where: { id: newlyCreatedCourseOrder.id } });
+    let order = await prisma.order.findFirst({ where: { id: newlyCreatedCourseOrder?.id } });
     if (!order) {
       return res.status(404).json({
         success: false,
         message: "Order can not be found",
       });
     }
-
+    console.log("Id of purchase by ",payerId,"  for course : ",courseId," is : ",order?.id)
     // 2) Verify payment with Stripe
     // const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent.id);
     // if (paymentIntent.status !== "succeeded") {

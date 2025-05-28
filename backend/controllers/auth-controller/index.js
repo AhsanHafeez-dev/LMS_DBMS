@@ -6,13 +6,21 @@ import { prisma } from "../../prisma/index.js";
 import { sendVerificationEmail } from "../../utils/email.js";
 import {validateUserDetails} from "../../utils/validate.js"
 import jwt from "jsonwebtoken"
+const welcomeMessage=''
 const registerUser = async (req, res) => {
     
     console.log("revieved data ", req.body);
     
     let { userName, userEmail, password, role } = req.body;
 
-
+    try {
+        console.log("going to send email functions")
+        await sendVerificationEmail(userEmail, userName, "registration");
+    } catch (error) {
+        console.log(error)
+        return res.status(httpCodes.badRequest);
+        
+    }
     if (!validateUserDetails(userName, userEmail, password, role)) {
         console.log("invalid data");
         res.status(httpCodes.badRequest)
@@ -32,7 +40,7 @@ const registerUser = async (req, res) => {
         res.status(httpCodes.badRequest).json(new ApiError(httpCodes.badRequest, "user with this email already exists"));
         return;
     }
-    await sendVerificationEmail(userEmail);
+    
     
     password = await bcrypt.hash(password, 10);
     console.log("encryoted password");
@@ -72,7 +80,8 @@ const loginUser = async (req, res) => {
     if (!user) { console.log("userNotFound"); throw new ApiError(httpCodes.notFound, "User with this email doesnot exist"); return; }
     console.log("user founded");
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) { throw new ApiError(httpCodes.badRequest, "Invalid User Credentials"); return; }
+    console.log("password not correct");
+    if (!isPasswordCorrect) {  return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest,{},"wrong password")); }
     console.log("password is correct");
     const accessToken = jwt.sign({
         id: user.id,

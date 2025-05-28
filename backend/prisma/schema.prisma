@@ -8,11 +8,7 @@ datasource db {
   directUrl         = env("DIRECT_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
-generator erd {
-  provider = "prisma-erd-generator"
-  output   = "./ERD.png" // You can change the output path and format as needed
-  theme    = "forest"    // Optional: themes include 'default', 'forest', 'dark', 'neutral'
-}
+
 
 
 // 
