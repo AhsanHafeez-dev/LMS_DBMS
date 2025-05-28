@@ -5,6 +5,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { initialSignInFormData, initialSignUpFormData } from "@/config";
 import { checkAuthService, loginService, registerService } from "@/services";
+import { User } from "lucide-react";
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -18,6 +19,7 @@ export default function AuthProvider({ children }) {
     role: null,
     id: null,
     userName: null,
+    userEmail:null
   });
   const [loading, setLoading] = useState(true);
 
@@ -56,6 +58,7 @@ export default function AuthProvider({ children }) {
           role: data.data.role,
           id: data.data.id,
           userName: data.data.userName,
+          User:data.data.userEmail
         };
         
         localStorage.setItem("authInfo", JSON.stringify(authInfo));

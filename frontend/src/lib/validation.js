@@ -1,10 +1,11 @@
 export function validateEmail(email) {
+  
     const pattern = /^\d{2}f-bscs-\d+@students\.duet\.edu\.pk$/i;
     if (!email) {
       return "Email is required";
     }
     if (!pattern.test(email)) {
-      return "Email must be in format: 22f-bscs-XX@students.duet.edu.pk";
+      return "Email must be in format: XXF-BXXX-XX@students.duet.edu.pk";
     }
     return null;
   }

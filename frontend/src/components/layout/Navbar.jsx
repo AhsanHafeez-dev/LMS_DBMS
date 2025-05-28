@@ -25,7 +25,7 @@ function Navbar() {
               onClick={() => router.push("/")}
               className="font-semibold text-xl text-slate-100 cursor-pointer"
             >
-              LMS LEARN
+              DUET LEARN
             </h2>
             <Button
               onClick={() => router.push("/student/courses")}

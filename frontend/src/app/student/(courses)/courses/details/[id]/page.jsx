@@ -403,21 +403,22 @@ export default function Page() {
   }
 
   async function handleCreatePayment() {
-    // if (!auth?.user?.id) {
-    //   console.error("User is not authenticated");
-    //   return;
-    // }
-
+    if (!auth) {
+      console.log("auth : ",auth)
+      console.error("User is not authenticated");
+      return;
+    }
+    console.log("auth : ",auth)
     const paymentPayload = {
-      userId: auth?.user?.id,
-      userName: auth?.user?.userName,
-      userEmail: auth?.user?.userEmail,
+      userId: auth?.id,
+      userName: auth?.userName,
+      userEmail: auth?.userEmail,
       orderStatus: "pending",
       paymentMethod: "paypal",
       paymentStatus: "initiated",
       orderDate: new Date(),
       paymentId: "",
-      payerId: "",
+      payerId: auth?.user?.id || "15",
       instructorId: studentViewCourseDetails?.instructorId,
       instructorName: studentViewCourseDetails?.instructorName,
       courseImage: studentViewCourseDetails?.image,
@@ -426,6 +427,7 @@ export default function Page() {
       coursePricing: studentViewCourseDetails?.pricing,
     };
 
+    console.log("paymenr payload : ",paymentPayload)
     const response = await createPaymentService(paymentPayload);
 
     if (response.success) {
