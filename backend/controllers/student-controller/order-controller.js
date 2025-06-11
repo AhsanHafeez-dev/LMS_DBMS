@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { httpCodes } from "../../constants.js";
 import { prisma } from "../../prisma/index.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
+import { sendVerificationEmail } from "../../utils/email.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -29,6 +30,19 @@ const createOrder = async (req, res) => {
       courseId="3",
       coursePricing=49.99,
     } = req.body;
+
+    const paymentConfirmationEmailHTML = `
+<div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6;'>
+  <h2 style='color: #28a745;'>Payment Successful – Thank You!</h2>
+  <p>Hi ${userName},</p>
+  <p>Thank you for enrolling in <strong>${courseTitle}</strong>.</p>
+  <p>Your payment of <strong>${coursePricing}</strong> has been successfully received.</p>
+  <p>You can now access your course materials anytime from your dashboard.</p>
+  <p>We wish you the best in your learning journey!</p>
+  <br>
+  <p>– The Duet Learning Team</p>
+</div>
+`;
     courseId += "";
     if (!userId) {
       return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest, {}, "userid not fouund"));
@@ -109,7 +123,7 @@ const createOrder = async (req, res) => {
       },
     });
 
-    // 4) The rest of your “finalize” logic is untouched…
+    
     const studentCourses = await prisma.studentCourse.findFirst({
       where: { userId: order.userId },
     });
@@ -151,6 +165,7 @@ const createOrder = async (req, res) => {
 
     const courseRecord = await prisma.course.findUnique({
       where: { id: Number(order.courseId) },
+      include:{students:true}
     });
 
     const newStudentEntry = {
@@ -180,6 +195,9 @@ const createOrder = async (req, res) => {
       },
     });
     console.log("courrse purchased");
+
+    // await sendVerificationEmail(userEmail, "Payment Confirmation Email",userName,paymentConfirmationEmailHTML);
+    
     // 3) Return the URL to redirect your user to
     res.status(httpCodes.created).json({
       success: true,

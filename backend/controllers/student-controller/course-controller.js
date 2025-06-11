@@ -5,7 +5,7 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 const getAllStudentViewCourses = async (req, res) => {
   try {
     console.log("handling request in student-controller/course-controller getAllStudentViewCourses controller")
-    // Optional: fetch all courses (if you still need this in l)
+    // Optional: fetch all courses (if you still need this )
     const courseList = await prisma.course.findMany();
     if (courseList.length == 0) { console.log("no course found"); return res.status(httpCodes.notFound).json(new ApiResponse(httpCodes.notFound,{},"no course exist")); }
     const {
@@ -99,10 +99,10 @@ const getStudentViewCourseDetails = async (req, res) => {
     }
     const lectures = await prisma.lecture.findMany({ where: { courseId: Number(id) } });
     courseDetails.curriculum = lectures;
-    
+    console.log(req.user);
     console.log("returning course");
     // console.log(courseDetails);
-
+    
     res.status(200).json({
       success: true,
       data: courseDetails,

@@ -10,6 +10,9 @@ export const markCurrentLectureAsViewed = async (req, res) => {
   
   const { userId: rawUserId, courseId: rawCourseId, lectureId } = req.body;
   const userId = rawUserId.toString();
+  
+  
+  
   const courseId = rawCourseId.toString();
   const now = new Date();
 
@@ -25,7 +28,7 @@ export const markCurrentLectureAsViewed = async (req, res) => {
       });
     }
 
-    
+      
     const existingLP = await prisma.lectureProgress.findFirst({
       where: {
         courseProgressId: progress.id,
@@ -61,12 +64,13 @@ export const markCurrentLectureAsViewed = async (req, res) => {
       include: { lectureProgress: true },
       
     });
+    progress.noOfLecturesViews += 1;
 
     console.log("now checking wether course is completed or not");
     // 1d) Check if we’ve now viewed every lecture in the course
     const course = await prisma.course.findUnique({
       where: { id: Number(courseId) },
-      include: { curriculum: true },
+      
     });
 
     if (!course) {
@@ -76,19 +80,34 @@ export const markCurrentLectureAsViewed = async (req, res) => {
         .json({ success: false, message: "Course not found" });
     }
 
-    const totalLectures = course.curriculum.length;
-    const viewedCount = progress.lectureProgress.filter(
-      (lp) => lp.viewed
-    ).length;
+    const totalLectures = course.noOfLectures;
+    const viewedCount = progress.noOfLecturesViews;
+    const attendance = (viewedCount / totalLectures) * 100;
+
+    console.log("current attendance is : ", attendance, " total lectures : ", totalLectures, " viewed :", viewedCount);
+
+    await prisma.courseStudent.updateMany({
+      where: { studentId: userId, courseId: rawCourseId },
+      data:{attendance:attendance}
+    });
 
     if (viewedCount === totalLectures) {
       console.log("course progresss is completed");
-      progress = await prisma.courseProgress.update({
+      progress = await prisma.courseProgress.updateMany({
         where: {  userId, courseId  },
-        data: { completed: true, completionDate: now },
+        data: { completed: true, completionDate: now,noOfLecturesViews:progress.noOfLecturesViews },
       });
     }
-    console.log("returning response");
+
+    else {
+      progress = await prisma.courseProgress.updateMany({
+        where: {  userId, courseId  },
+        data: { noOfLecturesViews:progress.noOfLecturesViews },
+      });
+      
+    }
+    progress.attendance = attendance;
+    console.log("returning response",progress.attendance);    
     return res.status(200).json({
       success: true,
       message: "Lecture marked as viewed",
@@ -147,13 +166,17 @@ export const getCurrentCourseProgress = async (req, res) => {
         where: { id: Number(courseId) },
         include:{curriculum:true}
       });
+      
       if (!course) {
         console.log("course didnot exist");
         return res
           .status(404)
           .json({ success: false, message: "Course not found" });
       }
+      
+      
       return res.status(200).json({
+        
         statusCode: 200,
         stattus:200,
         success: true,
@@ -161,6 +184,7 @@ export const getCurrentCourseProgress = async (req, res) => {
         data: {
           courseDetails: course,
           progress: [],
+          attendance:0.0,
           isPurchased: true,
         },
       });
@@ -172,6 +196,11 @@ export const getCurrentCourseProgress = async (req, res) => {
       where: { id: Number(courseId) },
       include: { curriculum: true },
     });
+    
+    const courstudent = await prisma.courseStudent.findFirst({ where: { studentId: userId, courseId: parseInt(courseId) } });
+    
+    console.log(courstudent.attendance, "returning this response");
+    
     return res.status(200).json({
       success: true,
       data: {
@@ -179,10 +208,13 @@ export const getCurrentCourseProgress = async (req, res) => {
         progress: progress.lectureProgress,
         completed: progress.completed,
         completionDate: progress.completionDate,
+        attendance:courstudent.attendance,
         isPurchased: true,
       },
     });
-  } catch (error) {
+  }
+  
+  catch (error) {
     console.error(error);
     return res
       .status(500)
@@ -229,7 +261,9 @@ export const resetCurrentCourseProgress = async (req, res) => {
       },
       include: { lectureProgress: true },
     });
-
+    
+    await prisma.courseStudent.updateMany({ where: { studentId: userId, courseId: parseInt(rawCourseId) }, data: { attendance: 0 } });
+    await prisma.courseProgress.updateMany({ where: { courseId: courseId, userId: userId }, data: { noOfLecturesViews: 0 } });
     console.log("successfully removed all data");
 
     return res.status(200).json({

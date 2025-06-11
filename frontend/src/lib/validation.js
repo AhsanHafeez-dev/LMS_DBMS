@@ -1,6 +1,8 @@
 export function validateEmail(email) {
-  
-    const pattern = /^\d{2}f-bscs-\d+@students\.duet\.edu\.pk$/i;
+  return null;    
+
+  const pattern = /^\d{2}f-bscs-\d+@[\w-]+\.duet\.edu\.pk$/i;
+
     if (!email) {
       return "Email is required";
     }
@@ -12,6 +14,7 @@ export function validateEmail(email) {
   
 
   export function validatePassword(password) {
+    
     if (!password) {
       return "Password is required";
     }

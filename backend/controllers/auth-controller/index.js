@@ -6,44 +6,76 @@ import { prisma } from "../../prisma/index.js";
 import { sendVerificationEmail } from "../../utils/email.js";
 import {validateUserDetails} from "../../utils/validate.js"
 import jwt from "jsonwebtoken"
-const welcomeMessage=''
+
+
 const registerUser = async (req, res) => {
     
     console.log("revieved data ", req.body);
     
     let { userName, userEmail, password, role } = req.body;
-
-    try {
-        console.log("going to send email functions")
-        await sendVerificationEmail(userEmail, userName, "registration");
-    } catch (error) {
-        console.log(error)
-        return res.status(httpCodes.badRequest);
-        
-    }
-    if (!validateUserDetails(userName, userEmail, password, role)) {
-        console.log("invalid data");
-        res.status(httpCodes.badRequest)
-            .json(new ApiError(httpCodes.badRequest, "Invalid data "));
-        return;
-    };
-    const existingUser = await prisma.user.findFirst(
-        {
-            where: {
-                userName,userEmail
-            }
-        }
-    );
+    const registrationEmailHTML = `<div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6;'>
+        <h2 style='color: #2d89ef;'>Welcome to Duet Learn!</h2>
+        <p>Hi ${userName},</p>
+        <p>Thank you for registering with us. We're excited to have you onboard!</p>
+        <p>You can now explore our courses, track your progress, and grow your skills.</p>
+        <p>If you have any questions, feel free to reach out to our support team.</p>
+        <p>Happy learning!</p>
+        <br>
+        <p>– The Duet Learn Team</p>
+        </div>
+        `;
+    let registrationText ="Thank you for registering with us. We're excited to have you onboard! You can now explore our courses, track your     progress, and grow your skills.If you have any questions, feel free to reach out to our support team. Happy learning";
     
-    if (existingUser) {
-        console.log("user already exist returning error");
-        res.status(httpCodes.badRequest).json(new ApiError(httpCodes.badRequest, "user with this email already exists"));
-        return;
+    if (!validateUserDetails(userName, userEmail, password, role)) {
+      console.log("invalid data");
+      res
+        .status(httpCodes.badRequest)
+        .json(new ApiError(httpCodes.badRequest, "Invalid data "));
+      return;
     }
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        userName,
+        userEmail,
+      },
+    });
+
+    if (existingUser) {
+      console.log("user already exist returning error");
+      res
+        .status(httpCodes.badRequest)
+        .json(
+          new ApiError(
+            httpCodes.badRequest,
+            "user with this email already exists"
+          )
+        );
+      return;
+    }
+
+
+    if (userEmail.endsWith("students.duet.edu.pk")) {
+      console.log("registering student");
+    
+        role = "student";
+    } else {
+      console.log("registering teacher");
+      role = "instructor";
+    }
+    
+
+    
+        console.log("going to send email functions")
+        // await sendVerificationEmail(userEmail,userName,"Registration successfull",registrationEmailHTML,registrationText);
+    
+    
     
     
     password = await bcrypt.hash(password, 10);
     console.log("encryoted password");
+    
+    
+
     const createdUser = await prisma.user.create({
         data: {
             userName,
@@ -117,6 +149,16 @@ const loginUser = async (req, res) => {
 
 }
 
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * Logs out the authenticated user by clearing the access token cookie.
+ * Sends a response with no content status indicating successful logout.
+ *
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+
+/*******  bd61bdb5-0ad4-4acc-a6e3-0be504e27f5e  *******/
 const logoutUser = async (req, res) => {
     console.log("logging out user");
     res.status(httpCodes.noContent).clearCookie("accessToken",secureCookieOptions).json(new ApiResponse(httpCodes.noContent, {}, "logout successfully"));
