@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { httpCodes } from "../../constants.js";
 import { prisma } from "../../prisma/index.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
-import { sendVerificationEmail } from "../../utils/email.js";
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 

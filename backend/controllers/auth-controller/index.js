@@ -3,9 +3,10 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import bcrypt from "bcrypt";
 import { ApiError } from "../../utils/ApiError.js";
 import { prisma } from "../../prisma/index.js";
-import { sendVerificationEmail } from "../../utils/email.js";
+
 import {validateUserDetails} from "../../utils/validate.js"
 import jwt from "jsonwebtoken"
+import { transporter } from "../../utils/email.js";
 
 
 const registerUser = async (req, res) => {
@@ -13,17 +14,7 @@ const registerUser = async (req, res) => {
     console.log("revieved data ", req.body);
     
     let { userName, userEmail, password, role } = req.body;
-    const registrationEmailHTML = `<div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6;'>
-        <h2 style='color: #2d89ef;'>Welcome to Duet Learn!</h2>
-        <p>Hi ${userName},</p>
-        <p>Thank you for registering with us. We're excited to have you onboard!</p>
-        <p>You can now explore our courses, track your progress, and grow your skills.</p>
-        <p>If you have any questions, feel free to reach out to our support team.</p>
-        <p>Happy learning!</p>
-        <br>
-        <p>– The Duet Learn Team</p>
-        </div>
-        `;
+    
     let registrationText ="Thank you for registering with us. We're excited to have you onboard! You can now explore our courses, track your     progress, and grow your skills.If you have any questions, feel free to reach out to our support team. Happy learning";
     
     if (!validateUserDetails(userName, userEmail, password, role)) {
@@ -66,8 +57,13 @@ const registerUser = async (req, res) => {
 
     
         console.log("going to send email functions")
-        // await sendVerificationEmail(userEmail,userName,"Registration successfull",registrationEmailHTML,registrationText);
-    
+  const mailOptions = {
+    from: process.env.SENDER_EMAIL,
+    to: userEmail,
+    subject: "Welcome to Duet Learning",
+    text:registrationText
+  };
+    // transporter.sendMail(mailOptions)
     
     
     

@@ -131,6 +131,8 @@
     instructorName String
     dateOfPurchase DateTime
     courseImage    String
+    attendance Float? @default(0)
+
 
     @@index([userId])
     @@index([courseId])

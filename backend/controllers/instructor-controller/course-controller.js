@@ -2,8 +2,8 @@ import { httpCodes } from "../../constants.js";
 import { prisma } from "../../prisma/index.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
-import { sendVerificationEmail } from "../../utils/email.js";
-("");
+
+
 const addNewCourse = async (req, res) => {
   try {
     console.log(

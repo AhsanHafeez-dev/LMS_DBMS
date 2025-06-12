@@ -1,33 +1,12 @@
+import nodemailer from "nodemailer";
 
+const transporter = nodemailer.createTransport({
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-const sendVerificationEmail = async (
-    reciever,
-    subject = "Confirm Registraion",
-    userName = "anoymnous",
-  html,
-    text=""
-) => {
-
-  
-  try {
-    const response = await resend.emails.send({
-      from: "Ahsan Hafeez <ahsanhafeez883@gmail.com>",
-      to: [reciever],
-      subject: reciever,
-      html: html,
-      text:text
-    });
-
-    console.log("Email sent successfully:", response);
-  } catch (error) {
-    console.error("Error sending email:", error);
-  }
-};
-
-const as = () => {
-  
-}
-export { sendVerificationEmail };
+export { transporter };

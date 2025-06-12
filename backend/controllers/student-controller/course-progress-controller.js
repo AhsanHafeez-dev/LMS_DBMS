@@ -90,7 +90,11 @@ export const markCurrentLectureAsViewed = async (req, res) => {
       where: { studentId: userId, courseId: rawCourseId },
       data:{attendance:attendance}
     });
-
+  
+    await prisma.studentCourse.updateMany({
+      where: { userId: userId, courseId: courseId },
+      data:{attendance:attendance}
+})
     if (viewedCount === totalLectures) {
       console.log("course progresss is completed");
       progress = await prisma.courseProgress.updateMany({
