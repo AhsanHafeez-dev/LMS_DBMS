@@ -6,7 +6,7 @@ import { prisma } from "../../prisma/index.js";
 
 import {validateUserDetails} from "../../utils/validate.js"
 import jwt from "jsonwebtoken"
-import { transporter } from "../../utils/email.js";
+// import { transporter } from "../../utils/email.js";
 
 
 const registerUser = async (req, res) => {

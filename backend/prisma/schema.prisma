@@ -19,6 +19,8 @@
     userEmail String @unique
     password  String
     role      String
+    liked Like[]
+    comments Comment[]
     
   }
 
@@ -43,6 +45,11 @@
     curriculum        Lecture[]       @relation("CourseLectures")
     students        CourseStudent[] @relation("CourseEnrollments")
     noOfLectures Int @default(1)
+    isFree Boolean @default(false)
+    comments Comment[]
+    noOfComments Int @default(0)
+    specialization Specialization? @relation("specializationCourses",fields: [specializationId],references: [id])
+    specializationId String?
   }
 
   /// Individual lectures in a course
@@ -54,6 +61,12 @@
     freePreview Boolean
     course      Course?  @relation("CourseLectures", fields: [courseId], references: [id])
     courseId    Int?
+    comment Comment[]
+    likes Like[]
+    noOfComments Int @default(0)
+    noOfLikes Int @default(0)
+    module Module? @relation(fields: [moduleId],references: [id])
+    moduleId String?
 
     @@index([courseId])
   }
@@ -137,3 +150,60 @@
     @@index([userId])
     @@index([courseId])
   }
+
+  model Comment{
+    id String @id @default(cuid())
+
+    comment Comment? @relation("CommentToComment",fields: [commentId],references: [id]) 
+    commentId String?
+    comments Comment[] @relation("CommentToComment")
+
+    lecture Lecture?   @relation(fields: [lectureId],references: [id])
+    lectureId Int? 
+
+    course Course? @relation(fields: [courseId],references: [id])
+    courseId Int?
+
+    likes Like[]
+    text String
+
+    noOfReplies Int @default(0)
+    noOfLikes Int @default(0)
+
+    owner User @relation(fields: [ownerId],references: [id])
+    ownerId Int
+
+  }
+
+  model Like{
+    id String @id  @default(cuid())
+    
+    lecture Lecture? @relation(fields: [lectureId],references: [id])
+    lectureId Int?
+
+    comment Comment? @relation(fields: [commentId],references: [id])
+    commentId String? 
+
+    owner   User  @relation(fields: [ownerId],references: [id])
+    ownerId Int
+
+
+  }
+
+model Specialization{
+  
+  id String @id @default(cuid())
+  courses Course[]  @relation("specializationCourses")
+  name String
+  price Float
+  noOfCoursed Int
+
+}
+
+model Module{
+  id String @id @default(cuid())
+  name String
+  noOfLectures Int
+  lectures Lecture[]
+  duration DateTime?
+}
