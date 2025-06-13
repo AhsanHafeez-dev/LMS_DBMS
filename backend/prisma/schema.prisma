@@ -21,6 +21,13 @@
     role      String
     liked Like[]
     comments Comment[]
+    refreshToken String @default("")
+    verifiyOtp String @default("")
+    verifiyOtpExpiresAt BigInt @default(0)
+    resetOtp String @default("")
+    resetOtpExpiresAt BigInt @default(0)
+    isAccountVerified Boolean @default(false)
+    
     
   }
 

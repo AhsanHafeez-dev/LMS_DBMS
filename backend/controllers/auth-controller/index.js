@@ -3,9 +3,10 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import bcrypt from "bcrypt";
 import { ApiError } from "../../utils/ApiError.js";
 import { prisma } from "../../prisma/index.js";
-
+import {asyncHandler} from "../../utils/asyncHandler.js"
 import {validateUserDetails} from "../../utils/validate.js"
 import jwt from "jsonwebtoken"
+import {EMAIL_VERIFY_TEMPLATE,PASSWORD_RESET_TEMPLATE} from "../../utils/EmailTemplate.js"
 // import { transporter } from "../../utils/email.js";
 
 
@@ -145,16 +146,6 @@ const loginUser = async (req, res) => {
 
 }
 
-/*************  ✨ Windsurf Command ⭐  *************/
-/**
- * Logs out the authenticated user by clearing the access token cookie.
- * Sends a response with no content status indicating successful logout.
- *
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
- */
-
-/*******  bd61bdb5-0ad4-4acc-a6e3-0be504e27f5e  *******/
 const logoutUser = async (req, res) => {
     console.log("logging out user");
     res.status(httpCodes.noContent).clearCookie("accessToken",secureCookieOptions).json(new ApiResponse(httpCodes.noContent, {}, "logout successfully"));
@@ -162,8 +153,159 @@ const logoutUser = async (req, res) => {
 
 }
 
+const sendVeirfyOtp = asyncHandler(
+  async (req, res) => {
+    const { userId } = req.body;
+
+    const user = await prisma.user.findFirst({
+      where: { id: parseInt(userId) },
+    });
+    if (!user) {
+      return res
+        .status(httpCodes.notFound)
+        .json(httpCodes.notFound, {}, "user with this id does not exist");
+    }
+
+    if (user.isAccountVerified) {
+      return res
+        .status(httpCodes.badRequest)
+        .json(
+          new ApiResponse(
+            httpCodes.badRequest,
+            {},
+            "account is already verified"
+          )
+        );
+    }
+
+    const Otp = String(Math.floor(100000 + Math.random() * 900000));
+    user.verifiyOtp = Otp;
+    user.verifiyOtpExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        verifiyOtp: user.verifiyOtp,
+        verifiyOtpExpiresAt: user.verifiyOtpExpiresAt,
+      },
+    });
+    // TODO: send email
+    const mailOptions = {
+      from: process.env.SENDER_EMAIL,
+      to: user.userEmail,
+      subject: "Email Verification",
+      html:EMAIL_VERIFY_TEMPLATE
+    };
+    // transporter.sendMail(mailOptions)
+
+    res
+      .status(httpCodes.ok)
+      .json(new ApiResponse(httpCodes.ok, {}, "otp send successfully"));
+  }
+);
+
+const verifyEmail = asyncHandler(
+  async (req, res) => {
+    const { userId, otp } = req.body;
+    if (!(userId.trim() && otp.trim())) { return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest, {}, "Empty UserId or otp")); }
+
+    let user = await prisma.user.findUnique({ id: parseInt(userId) });
+    
+    if (!user) { return res.status(httpCodes.notFound).json(new ApiResponse(httpCodes.notFound, {}, "user with this id doesnot exist")); }
+
+    if (!(user.verifiyOtp.trim()  && user.verifiyOtpExpiresAt < Date.now && user.verifiyOtp === otp ))
+    { return res.status(httpCodes.unauthorized).json(httpCodes.unauthorized, {}, "Invalid otp"); }
+
+    user = prisma.user.update({ where: { id: userId }, data: { isAccountVerified: true, verifiyOtp: "", verifiyOtpExpiresAt: 0 } })
+    user.password = undefined;
+
+    return res.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok,user,"email verified"))
+    
+  }
+)
+
+
+const sendPasswordResetOtp = asyncHandler(
+  async (req, res) => {
+    const { userId } = req.body;
+
+    const user = await prisma.user.findFirst({
+      where: { id: parseInt(userId) },
+    });
+    if (!user) {
+      return res
+        .status(httpCodes.notFound)
+        .json(httpCodes.notFound, {}, "user with this id does not exist");
+    }
+
+    if (user.isAccountVerified) {
+      return res
+        .status(httpCodes.badRequest)
+        .json(
+          new ApiResponse(
+            httpCodes.badRequest,
+            {},
+            "account is already verified"
+          )
+        );
+    }
+
+    const Otp = String(Math.floor(100000 + Math.random() * 900000));
+    user.resetOtp = Otp;
+    user.resetOtpExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        resetOtp: user.resetOtp,
+        resetOtpExpiresAt: user.resetOtpExpiresAt,
+      },
+    });
+
+    // TODO: send email
+    const mailOptions = {
+      from: process.env.SENDER_EMAIL,
+      to: user.userEmail,
+      subject: "Password Reset Otp",
+      html: PASSWORD_RESET_TEMPLATE,
+    };
+    // transporter.sendMail(mailOptions)
+
+    res
+      .status(httpCodes.ok)
+      .json(new ApiResponse(httpCodes.ok, {}, "reset otp send successfully"));
+  }
+);
+
+const resetPassword = asyncHandler(
+  async (req, res) => {
+    let { userId, otp,newPassword } = req.body;
+    if (!(userId.trim() && otp.trim() && newPassword.trim()))
+    { return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest, {}, "Empty UserId,password or otp")); }
+
+    let user = await prisma.user.findUnique({ id: parseInt(userId) });
+    
+    if (!user) { return res.status(httpCodes.notFound).json(new ApiResponse(httpCodes.notFound, {}, "user with this id doesnot exist")); }
+
+    if (!(user.resetOtp.trim()  && user.resetOtpExpiresAt < Date.now && user.resetOtp === otp ))
+    { return res.status(httpCodes.unauthorized).json(httpCodes.unauthorized, {}, "Invalid reset otp"); }
+    
+    newPassword = await bcrypt.hash(newPassword, process.env.HASH_ROUNDS);
+    
+    user = prisma.user.update({ where: { id: userId }, data: { password: newPassword, resetOtp: "", resetOtpExpiresAt: 0 } })
+    user.password = undefined;
+
+    return res.status(httpCodes.ok).json(new ApiResponse(httpCodes.ok,user,"email verified"))
+    
+  }
+)
+
+
+
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+  sendVeirfyOtp,
+  verifyEmail,
+  sendPasswordResetOtp,
+    resetPassword
 }

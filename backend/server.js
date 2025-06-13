@@ -18,7 +18,8 @@ app.use(
 
 import { authRoutes } from "./routes/auth-routes/index.js"
 import {instructorCourseRoutes} from "./routes/instructor-routes/course-routes.js"
-
+import { likeRouter } from "./routes/like-comment-routes/like.routes.js";
+import { commentRouter } from "./routes/like-comment-routes/comment.routes.js";
 import  {mediaRoutes} from "./routes/instructor-routes/media-routes.js";
 
 import {studentViewCourseRoutes} from "./routes/student-routes/course-routes.js";
@@ -34,8 +35,11 @@ app.use("/student/course", studentViewCourseRoutes);
 app.use("/student/order", studentViewOrderRoutes);
 app.use("/student/courses-bought", studentCoursesRoutes);
 app.use("/student/course-progress", studentCourseProgressRoutes);
+app.use("/comments", commentRouter);
+app.use("/like", likeRouter);
 
-app.route('/login').post( async (req, res) => {
+
+app.route('/login').post(async (req, res) => {
   console.log(req.body);
   res.status(200).json({message :req.body});
 })

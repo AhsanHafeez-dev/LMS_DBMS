@@ -6,7 +6,8 @@ import {ApiResponse } from "../../utils/ApiResponse.js";
 
 const addlikeToLecture = asyncHandler(
     async (req, res) => {
-        const { lectureId, like ,userId} = req.body;
+        const { lectureId, userId } = req.params;
+        const {  like } = req.body;
         if (!(lectureId && like && userId))
         { return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest, {}, "missing lectureId,userId or like")) }
         
@@ -39,13 +40,14 @@ const addlikeToLecture = asyncHandler(
 
 const addCommentToLecture = asyncHandler(
     async (req, res) => {
-
-        const {lectureId, comment } = req.body;
+        
+        const { lectureId, userId } = req.params;
+        const { comment } = req.body;
         if (!(lectureId && comment.trim()))
         { return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest, {}, "missing lectureId or comment")) }
         
         
-        const createdComment = await prisma.comment.create({ data: { lectureId: lectureId, text: comment } });
+        const createdComment = await prisma.comment.create({ data: { lectureId: lectureId, text: comment,ownerId:userId } });
         
         const lecture = await prisma.lecture.findFirst({ where: { id: lectureId } });
         

@@ -6,7 +6,8 @@ import {ApiResponse } from "../../utils/ApiResponse.js";
 
 const addlikeToComment = asyncHandler(
     async (req, res) => {
-        const { commentId, like,userId } = req.body;
+        const { commentId, userId } = req.params;
+        const { like } = req.body;
         
         if (!(commentId && like))
         { return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest, {}, "missing commentId or like")) }
@@ -42,7 +43,10 @@ const addlikeToComment = asyncHandler(
 
 const addReplyToComment = asyncHandler(
     async (req, res) => {
-        const { commentId, comment } = req.body;
+
+        const { commentId } = req.param;
+        const {  comment } = req.body;
+        
         if (!(commentId && comment))
         { return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest, {}, "missing commentId or comment")) }
         
