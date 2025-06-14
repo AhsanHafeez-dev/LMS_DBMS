@@ -6,8 +6,8 @@ import { prisma } from "../../prisma/index.js";
 import {asyncHandler} from "../../utils/asyncHandler.js"
 import {validateUserDetails} from "../../utils/validate.js"
 import jwt from "jsonwebtoken"
-import {EMAIL_VERIFY_TEMPLATE,PASSWORD_RESET_TEMPLATE} from "../../utils/EmailTemplate.js"
-// import { transporter } from "../../utils/email.js";
+import {EMAIL_VERIFY_TEMPLATE,PASSWORD_RESET_TEMPLATE, WELCOME_TEMPLATE} from "../../utils/EmailTemplate.js"
+import { transporter } from "../../utils/email.js";
 
 
 const registerUser = async (req, res) => {
@@ -62,9 +62,10 @@ const registerUser = async (req, res) => {
     from: process.env.SENDER_EMAIL,
     to: userEmail,
     subject: "Welcome to Duet Learning",
-    text:registrationText
+    // text:registrationText
+    html:WELCOME_TEMPLATE
   };
-    // transporter.sendMail(mailOptions)
+    transporter.sendMail(mailOptions)
     
     
     
@@ -193,9 +194,9 @@ const sendVeirfyOtp = asyncHandler(
       from: process.env.SENDER_EMAIL,
       to: user.userEmail,
       subject: "Email Verification",
-      html:EMAIL_VERIFY_TEMPLATE
+      html:EMAIL_VERIFY_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.userEmail)
     };
-    // transporter.sendMail(mailOptions)
+    transporter.sendMail(mailOptions)
 
     res
       .status(httpCodes.ok)
@@ -265,9 +266,9 @@ const sendPasswordResetOtp = asyncHandler(
       from: process.env.SENDER_EMAIL,
       to: user.userEmail,
       subject: "Password Reset Otp",
-      html: PASSWORD_RESET_TEMPLATE,
+      html: PASSWORD_RESET_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.userEmail),
     };
-    // transporter.sendMail(mailOptions)
+    transporter.sendMail(mailOptions)
 
     res
       .status(httpCodes.ok)

@@ -9,4 +9,10 @@
 //   },
 // });
 
-// export { transporter };
+const transporter = {
+  sendMail: (mailOtions) => {
+    return;
+  }
+}
+
+export { transporter };

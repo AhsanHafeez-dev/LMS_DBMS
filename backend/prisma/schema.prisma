@@ -57,6 +57,8 @@
     noOfComments Int @default(0)
     specialization Specialization? @relation("specializationCourses",fields: [specializationId],references: [id])
     specializationId String?
+    noOfStudents Int @default(0)
+    ratings Float @default(0.0)
   }
 
   /// Individual lectures in a course

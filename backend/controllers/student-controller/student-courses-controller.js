@@ -15,6 +15,7 @@ const getCoursesByStudentId = async (req, res) => {
     });
 
     console.log("Sending list of student brought courses");
+    console.log(studentBoughtCourses);
     
     res.status(200).json({
       success: true,

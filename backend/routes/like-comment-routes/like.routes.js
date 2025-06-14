@@ -1,6 +1,6 @@
 import express from "express";
-import { addlikeToLecture } from "../../controllers/comment-like-controllers/video.controller";
-import { addlikeToComment } from "../../controllers/comment-like-controllers/comment.controller";
+import { addlikeToLecture } from "../../controllers/comment-like-controllers/video.controller.js";
+import { addlikeToComment } from "../../controllers/comment-like-controllers/comment.controller.js";
 
 
 const likeRouter = express.Router()

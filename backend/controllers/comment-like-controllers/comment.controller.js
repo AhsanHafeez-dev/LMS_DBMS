@@ -1,4 +1,4 @@
-import { asyncHandler } from "../../utils/asyncHandler";
+import { asyncHandler } from "../../utils/asyncHandler.js";
 import { prisma } from "../../prisma/index.js";
 import { httpCodes } from "../../constants.js";
 import {ApiResponse } from "../../utils/ApiResponse.js";

@@ -2,6 +2,8 @@ import { httpCodes } from "../../constants.js";
 import { prisma } from "../../prisma/index.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
+import { transporter } from "../../utils/email.js"
+import {COURSE_UPDATE_NOTIFICATION_TEMPLATE} from "../../utils/EmailTemplate.js"
 
 
 const addNewCourse = async (req, res) => {
@@ -121,77 +123,6 @@ const updateCourseById = async (req, res) => {
     console.log(
       "handling request in instructor-controller/course-controller on updateCourseById controller"
     );
-    
-    const updateEmailHtml = `
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Course Update Notification</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f4;
-      font-family: Arial, sans-serif;
-    }
-    .email-container {
-      max-width: 600px;
-      margin: auto;
-      background-color: #ffffff;
-      padding: 20px;
-    }
-    .header {
-      background-color: #2a9df4;
-      color: #ffffff;
-      padding: 20px;
-      text-align: center;
-    }
-    .content {
-      padding: 20px;
-      color: #333333;
-    }
-    .content h2 {
-      color: #2a9df4;
-    }
-    .footer {
-      background-color: #eeeeee;
-      color: #666666;
-      text-align: center;
-      padding: 10px;
-      font-size: 12px;
-    }
-    @media only screen and (max-width: 600px) {
-      .email-container {
-        width: 100% !important;
-        padding: 10px !important;
-      }
-      .header, .content, .footer {
-        padding: 10px !important;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="email-container">
-    <div class="header">
-      <h1>Course Update</h1>
-    </div>
-    <div class="content">
-      <p>Dear <strong>${studentName}</strong>,</p>
-      <p>We would like to inform you about an important update to your course: <strong>${courseName}</strong>.</p>
-      <p>Your instructor, <strong>${instructorName}</strong>, has made some changes to the course content/schedule. Please log in to your student portal to review the updates and ensure you're prepared for the upcoming sessions.</p>
-      <p>If you have any questions or need further assistance, feel free to reach out to your instructor or the support team.</p>
-      <p>Best regards,<br>The Academic Team</p>
-    </div>
-    <div class="footer">
-      &copy; 2025 Your Institution Name. All rights reserved.
-    </div>
-  </div>
-</body>
-</html>
-
-    `;
     let { id } = req.params;
     
     id = parseInt(id);
@@ -212,14 +143,39 @@ const updateCourseById = async (req, res) => {
     
     console.log(updatedCourse);
     
+    
     if (!updatedCourse) {
       console.log("course not found");
       return res
         .status(httpCodes.notFound)
         .json(new ApiResponse(httpCodes.notFound, {}, "course didnot exiits"));
     }
-    // updatedCourse.students.map(async (std) => { sendVerificationEmail(std.studentEmail, std.studentName, "Course Update", updateEmailHtml); });
-    // console.log("course updated successfully sending response");
+    
+    updatedCourse.students.map(async (std) =>
+    {
+      const mailOptions = {
+        from: process.env.SENDER_EMAIL,
+        to: std.studentEmail,
+        subject: "Course update",
+        // text:registrationText
+        html: COURSE_UPDATE_NOTIFICATION_TEMPLATE.replaceAll(
+          "{{courseTitle}}",
+          updatedCourse.title
+        )
+          .replace("{{name}}", std.studentName)
+          .replace(
+            "{{updateDescription}}",
+            "we have added some updates to lectures"
+          )
+          .replace(
+            "{{courseLink}}",
+            `${process.env.CLIENT_URL}/student/course-progress/${updatedCourse.id}`
+          ),
+      };
+      transporter.sendMail(mailOptions);
+    });
+    
+    console.log("course updated successfully sending response");
 
     res
       .status(httpCodes.ok)
