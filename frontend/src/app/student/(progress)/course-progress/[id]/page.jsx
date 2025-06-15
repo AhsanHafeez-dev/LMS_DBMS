@@ -35,16 +35,18 @@ function page() {
   const [isSideBarOpen, setIsSideBarOpen] = useState(true);
   const { id } = useParams();
   const router = useRouter();
+  const [attendance , setAttendance] = useState(0)
 
   async function fetchCurrentCourseProgress() {
-    console.log("fetching current course progress");
-    console.log("Data sending : ", auth.id, id);
+  
 
     if (!auth.id || !id) return;
 
     try {
       const response = await getCurrentCourseProgressService(auth.id, id);
       console.log("response of course progress: ", response);
+          
+      setAttendance(response?.data.attendance);
 
       if (response?.success) {
         if (!response?.data?.isPurchased) {
@@ -237,6 +239,11 @@ function page() {
                   "Loading course..."}
               </h1>
             </div>
+        
+           <div className="flex gap-x-24 item-center pt-1">
+
+           <span className="px-2.5 py-2  text-black rounded-full text-[14px] font-semibold bg-white">Attendance : {attendance.toFixed(2)}%</span>
+
             <Button onClick={() => setIsSideBarOpen(!isSideBarOpen)}>
               {isSideBarOpen ? (
                 <ChevronRight className="h-5 w-5" />
@@ -244,6 +251,7 @@ function page() {
                 <ChevronLeft className="h-5 w-5" />
               )}
             </Button>
+            </div>
           </div>
 
           {/* Progress bar */}

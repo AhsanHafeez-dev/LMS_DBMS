@@ -93,8 +93,6 @@ async function fetchAllStudentViewCourses(filters, sort) {
     }
   }
 
-  // router.push(`/student/courses/details/${getCurrentCourseId}`)
-
 }
 
 

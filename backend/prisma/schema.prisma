@@ -27,7 +27,7 @@
     resetOtp String @default("")
     resetOtpExpiresAt BigInt @default(0)
     isAccountVerified Boolean @default(false)
-    
+    certificates Certificate[]    
     
   }
 
@@ -58,7 +58,9 @@
     specialization Specialization? @relation("specializationCourses",fields: [specializationId],references: [id])
     specializationId String?
     noOfStudents Int @default(0)
+    noOfStudentsCompletedCourse Int @default(0)
     ratings Float @default(0.0)
+    certificates Certificate[]
   }
 
   /// Individual lectures in a course
@@ -215,4 +217,17 @@ model Module{
   noOfLectures Int
   lectures Lecture[]
   duration DateTime?
+}
+
+model Certificate{
+  id String @id @default(cuid())
+  
+  course Course?  @relation(fields: [courseId],references: [id])
+  courseId Int?
+  
+  user User? @relation(fields: [userId],references: [id])
+  userId Int? 
+
+  certificateUrl String
+
 }

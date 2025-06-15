@@ -1,4 +1,7 @@
 import { prisma } from "../../prisma/index.js";
+import { generateCertificatePdf } from "../../utils/certficateGeneration.js";
+import { v4 as uuidv4 } from "uuid";
+import { uploadMediaToCloudinary } from "../../utils/cloudinary.js";
 
 //
 // 1. Mark one lecture as viewed (and—if it’s the last one—mark the course complete)
@@ -15,16 +18,27 @@ export const markCurrentLectureAsViewed = async (req, res) => {
   
   const courseId = rawCourseId.toString();
   const now = new Date();
+  // steps
+  // checks wether courseProgress already exist if not create one
+
+  // check wether lecture is viewed for first time if not create one other wise update last viewed
+  // increase number of lecture viewed 
+  // calculate fresh attendance
+  // check if course is completed
+  
 
   try {
-    // 1a) Get or create the CourseProgress row
+    
     let progress = await prisma.courseProgress.findFirst({
-      where: {  userId, courseId } ,
+      where: { userId, courseId },
+      include:{lectureProgress:true}
     });
+
     if (!progress) {
       console.log("lecture is viewed for first time marking as done");
       progress = await prisma.courseProgress.create({
         data: { userId, courseId, completed: false },
+        include:{lectureProgress:true}
       });
     }
 
@@ -39,12 +53,13 @@ export const markCurrentLectureAsViewed = async (req, res) => {
       
       console.log("updating last viewed time");
       
-      await prisma.lectureProgress.update({
+      await prisma.lectureProgress.updateMany({
         where: { id: existingLP.id },
         data: { viewed: true, dateViewed: now },
       });
 
-    } else {
+    }
+    else {
 
       console.log("cretaing lecture progress for first time");
 
@@ -56,18 +71,14 @@ export const markCurrentLectureAsViewed = async (req, res) => {
           dateViewed: now,
         },
       });
-    }
-
-    
-    progress = await prisma.courseProgress.findFirst({
-      where: {  userId, courseId },
-      include: { lectureProgress: true },
       
-    });
+    }
     progress.noOfLecturesViews += 1;
+    
+    
 
     console.log("now checking wether course is completed or not");
-    // 1d) Check if we’ve now viewed every lecture in the course
+    
     const course = await prisma.course.findUnique({
       where: { id: Number(courseId) },
       
@@ -84,25 +95,50 @@ export const markCurrentLectureAsViewed = async (req, res) => {
     const viewedCount = progress.noOfLecturesViews;
     const attendance = (viewedCount / totalLectures) * 100;
 
-    console.log("current attendance is : ", attendance, " total lectures : ", totalLectures, " viewed :", viewedCount);
+    
 
-    await prisma.courseStudent.updateMany({
+    const cstd=await prisma.courseStudent.updateManyAndReturn({
       where: { studentId: userId, courseId: rawCourseId },
       data:{attendance:attendance}
     });
-  
-    await prisma.studentCourse.updateMany({
+    
+    
+    const std=await prisma.studentCourse.updateManyAndReturn({
       where: { userId: userId, courseId: courseId },
       data:{attendance:attendance}
-})
+    })
+
+
+    console.log("current attendance of : ",cstd[0].studentName," is : ", attendance," in course : ",std[0].title, " where total lectures are  : ", totalLectures, " and viewed lectures are :", viewedCount);
+    
+    let certificateUrl;
+    
     if (viewedCount === totalLectures) {
+      const course = await prisma.certificate.findFirst({ where: { courseId: parseInt(cstd[0]).courseId, userId: parseInt(std[0].userId) } })
+      if(!course){
+      let certId = uuidv4();
+      const certificate = await generateCertificatePdf(cstd[0].studentName, std[0].title,certId);
+      console.log("certificate generated at ", certificate);
+       certificateUrl = (await uploadMediaToCloudinary(certificate)).secure_url;
+      
+      await prisma.certificate.create({
+        data: {
+          courseId: parseInt(cstd[0]).courseId,
+          userId: parseInt(std[0].userId),
+          certificateUrl: certificateUrl,
+        },
+      });}
+      
       console.log("course progresss is completed");
+      
       progress = await prisma.courseProgress.updateMany({
         where: {  userId, courseId  },
-        data: { completed: true, completionDate: now,noOfLecturesViews:progress.noOfLecturesViews },
+        data: { completed: true, completionDate: now,noOfLecturesViews:progress.noOfLecturesViewsl },
       });
+    
     }
 
+    
     else {
       progress = await prisma.courseProgress.updateMany({
         where: {  userId, courseId  },
@@ -115,7 +151,7 @@ export const markCurrentLectureAsViewed = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Lecture marked as viewed",
-      data: progress,
+      data: {progress,certificateUrl},
     });
   } catch (error) {
     console.error(error);

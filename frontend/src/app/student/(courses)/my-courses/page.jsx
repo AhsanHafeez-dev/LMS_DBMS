@@ -53,12 +53,15 @@ function StudentCoursesPage() {
                 <img
                   src={course?.courseImage}
                   alt={course?.title}
-                  className="h-52 w-full object-cover rounded-md mb-5"
+                  className="h-52  w-full object-cover rounded-md mb-5"
                 />
                 <h3 className="font-bold text-lg mb-2 text-text">{course?.title}</h3>
-                <p className="text-[15px] text-gray-200">
+
+                <p className="text-[15px] text-gray-200 mb-2">
                   {course?.instructorName}
                 </p>
+               <p className={`text-[15px] ${course?.attendance === 0 ? "text-red-500":"text-white"}`}>Attendance: {course.attendance === 0 ? 0 : course?.attendance.toFixed(2)}%</p>
+        
               </CardContent>
               <CardFooter>
                 <Link href={`/student/course-progress/${course?.courseId}`}>

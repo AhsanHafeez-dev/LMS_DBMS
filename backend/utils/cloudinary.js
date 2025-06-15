@@ -10,14 +10,16 @@ v2.config({
 
 const uploadMediaToCloudinary = async (filePath) => {
   try {
+    console.log("uploading : ",filePath)
     const cloudinaryResponse = await v2.uploader.upload(filePath, {
-      resource_type: "auto",
+      resource_type:"auto",
     });
     if (cloudinaryResponse) { await fs.rmSync(filePath); }
     console.log(cloudinaryResponse.secure_url)
     return cloudinaryResponse;
   } catch (error) {
-    console.log("cloudinary error")
+    console.log("cloudinary error");
+    console.log(error);
     throw new ApiError(httpCodes.badGateway, error.message);
   }
 };

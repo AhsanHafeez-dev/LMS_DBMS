@@ -38,6 +38,16 @@ const createOrder = async (req, res) => {
       return res.status(httpCodes.badRequest).json(new ApiResponse(httpCodes.badRequest, {}, "userid not fouund"));
     }
     userId += "";
+
+    // checking wether course is already brought or not
+    
+    let std = await prisma.studentCourse.findFirst({ where: { userId: userId, courseId: courseId } });
+    
+    if (std)
+    { return res.status(httpCodes.unprocessableEntity).json(new ApiResponse(httpCodes.unprocessableEntity, {}, "course is already brought by user")); }
+    
+    
+    
     // 1) Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
